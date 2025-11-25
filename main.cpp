@@ -39,7 +39,7 @@ cv::Mat rsColor2cvMat(const rs2::frame &color) {
     return bgr_frame;
 }
 
-int main() {
+int openRS() {
     rs2::context ctx;
     rs2::device_list devices = ctx.query_devices();
     if (devices.size() == 0) {
@@ -122,5 +122,10 @@ int main() {
       }
     }
     
+    return 0;
+}
+
+int main() {
+    openRS();
     return 0;
 }
