@@ -1,7 +1,8 @@
-#include <librealsense2/rs.hpp>
+#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
-#include <iostream>
+
+#include <librealsense2/rs.hpp>
 
 int read_mode(std::string config_path) {
     YAML::Node node = YAML::LoadFile(config_path);
@@ -39,12 +40,12 @@ cv::Mat rsColor2cvMat(const rs2::frame &color) {
     return bgr_frame;
 }
 
-int openRS() {
+void openRS() {
     rs2::context ctx;
     rs2::device_list devices = ctx.query_devices();
     if (devices.size() == 0) {
         std::cerr << "没有相机" << std::endl;
-        return -1;
+        return;
     }
 
     // 只有一个D455
@@ -84,7 +85,7 @@ int openRS() {
         );
     } else {
         std::cerr << "该相机不支持硬件同步" << std::endl;
-        return -1;
+        return;
     }
 
     int fps = read_fps("../config.yaml");
@@ -121,8 +122,6 @@ int openRS() {
         cv::waitKey(1);
       }
     }
-    
-    return 0;
 }
 
 int main() {
