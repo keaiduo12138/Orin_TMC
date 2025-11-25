@@ -1,0 +1,8 @@
+# 0: default mode
+# 1: master mode
+# 2: slave mode
+# 3: full slave mode
+# 其它, 看代码里面的注释
+sync_mode: 4
+
+fps: 60
