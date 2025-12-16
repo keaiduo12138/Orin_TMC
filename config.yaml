@@ -6,3 +6,11 @@
 sync_mode: 4
 
 fps: 60
+
+
+prophesee:
+  # 0: record
+  # 1: play
+  record_or_play: 0
+  file_dir: "../resource/"
+  file_to_play: "../resource/date/time.raw"
