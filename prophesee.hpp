@@ -33,7 +33,6 @@ private:
 
     std::string file_to_save;
     std::string file_to_play;
-    bool recording = false;
 
     int record_or_play = -1;
 

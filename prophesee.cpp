@@ -28,7 +28,6 @@ void Prophesee::record() {
                 }
             }
         );
-    this->recording = true;
 
     while (cam.is_running()) {
         std::this_thread::sleep_for(std::chrono::microseconds(1));
@@ -82,7 +81,7 @@ void Prophesee::open() {
 }
 
 void Prophesee::close() {
-    if (this->recording) {
+    if (record_or_play == 0) {
         cam.stop_recording(this->file_to_save);
     }
     cam.stop();
