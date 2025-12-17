@@ -31,7 +31,7 @@ private:
 
     Metavision::Camera cam;
 
-    std::string file_path;
+    std::string file_to_save;
     std::string file_to_play;
     bool recording = false;
 

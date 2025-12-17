@@ -6,9 +6,9 @@ Prophesee::Prophesee(std::string file_dir, std::string file_to_play, int record_
     if (record_or_play == 0) {
         std::string dir_path = file_dir + today_date() + '/';
         std::filesystem::create_directories(dir_path);
-        this->file_path = dir_path + today_time() + ".raw";
+        this->file_to_save = dir_path + today_time() + ".raw";
     } else {
-        this->file_path = file_dir;
+        this->file_to_save = file_dir;
     }
     this->file_to_play = file_to_play;
     this->record_or_play = record_or_play;
@@ -73,7 +73,7 @@ void Prophesee::open() {
     if (record_or_play == 0) {
         this->cam = Metavision::Camera::from_first_available();
         cam.get_device().get_facility<Metavision::I_TriggerIn>()->enable(Metavision::I_TriggerIn::Channel::Main);
-        cam.start_recording(this->file_path);
+        cam.start_recording(this->file_to_save);
         cam.start();
     } else if (record_or_play == 1) {
         this->cam = Metavision::Camera::from_file(file_to_play);
@@ -83,7 +83,7 @@ void Prophesee::open() {
 
 void Prophesee::close() {
     if (this->recording) {
-        cam.stop_recording(this->file_path);
+        cam.stop_recording(this->file_to_save);
     }
     cam.stop();
 }
