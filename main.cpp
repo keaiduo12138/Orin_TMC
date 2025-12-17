@@ -1,4 +1,3 @@
-#include <iostream>
 #include "realsense.hpp"
 #include "prophesee.hpp"
 
