@@ -2,9 +2,8 @@
 #include <filesystem>
 
 
-RealSense::RealSense(std::string file_dir, std::string file_to_play, const int record_or_play) {
-    this->record_or_play = record_or_play;
-
+RealSense::RealSense(const RunMode run_mode, std::string file_dir, std::string file_without_suffix)
+: run_mode(run_mode) {
     rs2::device_list devices = this->ctx.query_devices();
     if (devices.size() < 1) {
         printf("realsense未连接, 退出\n");
@@ -14,14 +13,16 @@ RealSense::RealSense(std::string file_dir, std::string file_to_play, const int r
         return;
     }
 
-    if (record_or_play == 0) {
+    if (this->run_mode == RunMode::RECORD) {
         std::string dir_path = file_dir + today_date() + '/';
         std::filesystem::create_directories(dir_path);
         this->file_to_save = dir_path + today_time() + ".bag";
         this->camera = rs2::recorder(file_to_save, devices[0]);
-    } else {
-        this->file_to_play = file_to_play;
+    } else if (this->run_mode == RunMode::PLAY) {
+        this->file_to_play = file_without_suffix + ".bag";
         this->player = ctx.load_device(file_to_play);
+    } else {
+        printf("Run Mode 非法, 程序退出\n");
     }
 }
 
@@ -76,7 +77,12 @@ void RealSense::play() {
 }
 
 void RealSense::open() {
-    if (record_or_play == 0) {
+    if (run_mode == RunMode::RECORD) {
+        if (!camera.has_value()) {
+            printf("camera 未初始化, 无法打开设备\n");
+            return;
+        }
+
         // 设置 Genlock Mode
         rs2::sensor cam_sensor = camera->query_sensors().at(0);
         if (cam_sensor.supports(RS2_OPTION_INTER_CAM_SYNC_MODE)) {
@@ -100,12 +106,14 @@ void RealSense::open() {
 
         pipe = rs2::pipeline(this->ctx);
         pipe.start(cfg);
-    } else {
+    } else if (this->run_mode == RunMode::PLAY) {
         cfg.enable_device_from_file(file_to_play);
         cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_Z16, 90);
         cfg.enable_stream(RS2_STREAM_COLOR, 640, 360, RS2_FORMAT_BGR8, 90);
     
         pipe = rs2::pipeline(this->ctx);
         pipe.start(cfg);
+    } else {
+        printf("Run Mode 非法, 程序退出\n");
     }
 }

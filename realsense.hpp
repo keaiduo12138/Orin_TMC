@@ -1,3 +1,5 @@
+#pragma once
+
 #include <optional>
 #include <opencv2/opencv.hpp>
 #include <librealsense2/rs.hpp>
@@ -8,7 +10,7 @@
 class RealSense {
 
 public:
-    RealSense(std::string file_dir, std::string file_to_play, const int record_or_play);
+    RealSense(const RunMode run_mode, std::string file_dir, std::string file_without_suffix);
 
     ~RealSense() = default;
 
@@ -27,6 +29,6 @@ private:
     std::string file_to_save;
     std::string file_to_play;
 
-    int record_or_play = -1;
+    int run_mode = 0;
 
 };

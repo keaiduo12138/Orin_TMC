@@ -1,3 +1,5 @@
+#pragma once
+
 #include <thread>
 #include <opencv2/opencv.hpp>
 #include <yaml-cpp/yaml.h>
@@ -18,7 +20,7 @@ class Prophesee {
 
 public:
     Prophesee() = default;
-    Prophesee(std::string file_dir, std::string file_to_play, int record_or_play);
+    Prophesee(const RunMode run_mode, std::string file_dir, std::string file_without_suffix);
 
     ~Prophesee();
 
@@ -34,6 +36,6 @@ private:
     std::string file_to_save;
     std::string file_to_play;
 
-    int record_or_play = -1;
+    int run_mode = 0;
 
 };

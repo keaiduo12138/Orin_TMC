@@ -2,16 +2,17 @@
 #include <filesystem>
 
 
-Prophesee::Prophesee(std::string file_dir, std::string file_to_play, int record_or_play) {
-    if (record_or_play == 0) {
+Prophesee::Prophesee(const RunMode run_mode, std::string file_dir, std::string file_without_suffix)
+:run_mode(run_mode) {
+    if (run_mode == RunMode::RECORD) {
         std::string dir_path = file_dir + today_date() + '/';
         std::filesystem::create_directories(dir_path);
         this->file_to_save = dir_path + today_time() + ".raw";
+    } else if (run_mode == RunMode::PLAY) {
+        this->file_to_play = file_without_suffix + ".raw";
     } else {
-        this->file_to_save = file_dir;
+        printf("Run Mode 非法, 程序退出\n");
     }
-    this->file_to_play = file_to_play;
-    this->record_or_play = record_or_play;
 }
 
 Prophesee::~Prophesee() {
@@ -69,19 +70,21 @@ void Prophesee::play() {
 }
 
 void Prophesee::open() {
-    if (record_or_play == 0) {
+    if (run_mode == RunMode::RECORD) {
         this->cam = Metavision::Camera::from_first_available();
         cam.get_device().get_facility<Metavision::I_TriggerIn>()->enable(Metavision::I_TriggerIn::Channel::Main);
         cam.start_recording(this->file_to_save);
         cam.start();
-    } else if (record_or_play == 1) {
+    } else if (run_mode == RunMode::PLAY) {
         this->cam = Metavision::Camera::from_file(file_to_play);
         cam.start();
+    } else {
+        printf("Run Mode 非法, 程序退出\n");
     }
 }
 
 void Prophesee::close() {
-    if (record_or_play == 0) {
+    if (run_mode == RunMode::RECORD) {
         cam.stop_recording(this->file_to_save);
     }
     cam.stop();
