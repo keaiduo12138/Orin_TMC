@@ -4,6 +4,10 @@
 
 Prophesee::Prophesee(const RunMode run_mode, std::string file_dir, std::string file_without_suffix)
 :run_mode(run_mode) {
+    // 展开路径
+    file_dir = expand_user(file_dir);
+    file_without_suffix = expand_user(file_without_suffix);
+
     if (run_mode == RunMode::RECORD) {
         std::string dir_path = file_dir + today_date() + '/';
         std::filesystem::create_directories(dir_path);

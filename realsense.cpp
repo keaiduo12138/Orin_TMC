@@ -4,6 +4,10 @@
 
 RealSense::RealSense(const RunMode run_mode, std::string file_dir, std::string file_without_suffix)
 : run_mode(run_mode) {
+    // 展开路径
+    file_dir = expand_user(file_dir);
+    file_without_suffix = expand_user(file_without_suffix);
+
     rs2::device_list devices = this->ctx.query_devices();
     if (devices.size() < 1) {
         printf("realsense未连接, 退出\n");
