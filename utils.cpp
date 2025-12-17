@@ -1,7 +1,7 @@
 #include "utils.hpp"
 
 #include <chrono>
-#include <cstdlib> // getenv
+#include <cstdlib>
 
 
 std::time_t now_time = std::time(0);
