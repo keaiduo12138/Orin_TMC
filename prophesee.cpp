@@ -3,7 +3,7 @@
 
 
 Prophesee::Prophesee(const RunMode run_mode, std::string file_dir, std::string file_without_suffix)
-:run_mode(run_mode) {
+: run_mode(run_mode) {
     // 展开路径
     file_dir = expand_user(file_dir);
     file_without_suffix = expand_user(file_without_suffix);
@@ -44,8 +44,8 @@ void Prophesee::play() {
     auto frame_gen = Metavision::PeriodicFrameGenerationAlgorithm(
         cam.geometry().width(),
         cam.geometry().height(),
-        20000,
-        50
+        33333,
+        30
     );
     cam.ext_trigger().add_callback([&](
         const Metavision::EventExtTrigger *begin,
@@ -68,7 +68,7 @@ void Prophesee::play() {
         window.show(frame);
     });
     while (cam.is_running()) {
-        static constexpr std::int64_t kSleepPeriodMs = 20;
+        static constexpr std::int64_t kSleepPeriodMs = 33;
         Metavision::EventLoop::poll_and_dispatch(kSleepPeriodMs);
     }
 }

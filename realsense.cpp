@@ -114,7 +114,7 @@ void RealSense::open() {
         cfg.enable_device_from_file(file_to_play);
         cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_Z16, 90);
         cfg.enable_stream(RS2_STREAM_COLOR, 640, 360, RS2_FORMAT_BGR8, 90);
-    
+
         pipe = rs2::pipeline(this->ctx);
         pipe.start(cfg);
     } else {

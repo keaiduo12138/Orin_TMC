@@ -7,3 +7,4 @@ file_without_suffix: "~/Desktop/resource/date/time"
 
 enable_realsense: 1
 enable_prophesee: 1
+enable_davis: 1
