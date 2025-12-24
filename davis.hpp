@@ -10,6 +10,7 @@
 #include <dv-processing/io/mono_camera_writer.hpp>
 #include <dv-processing/core/core.hpp>
 #include <dv-processing/data/generate.hpp>
+#include <dv-processing/visualization/event_visualizer.hpp>
 
 #include "utils.hpp"
 
@@ -25,7 +26,7 @@ public:
     void play();
 
 private:
-    void open();
+    int open();
 
     cv::Size resolution;
     dv::io::camera::SyncCameraPtr camera;
