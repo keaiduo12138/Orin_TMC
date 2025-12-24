@@ -10,10 +10,10 @@ RealSense::RealSense(const RunMode run_mode, std::string file_dir, std::string f
 
     rs2::device_list devices = this->ctx.query_devices();
     if (devices.size() < 1) {
-        printf("realsense未连接, 退出\n");
+        printf("RealSense 未连接, 退出\n");
         return;
     } else if (devices.size() > 1) {
-        printf("有多个realsense, 退出\n");
+        printf("有多个 RealSense, 退出\n");
         return;
     }
 
@@ -53,8 +53,11 @@ cv::Mat rsDepth2cvMat(const rs2::frame &depth) {
 }
 
 void RealSense::record() {
-    this->open();
-    printf("realsense 开始录制\n");
+    if (this->open() != 1) {
+        printf("RealSense 打开失败\n");
+        return;
+    }
+    printf("RealSense 开始录制\n");
     while (true) {
         pipe.wait_for_frames(60000);
     }
@@ -62,8 +65,11 @@ void RealSense::record() {
 }
 
 void RealSense::play() {
-    this->open();
-    printf("realsense 开始播放\n");
+    if (this->open() != 1) {
+        printf("RealSense 打开失败\n");
+        return;
+    }
+    printf("RealSense 开始播放\n");
     rs2::frameset fs;
     while (true) {
         if (pipe.poll_for_frames(&fs)) {
@@ -80,20 +86,20 @@ void RealSense::play() {
     pipe.stop();
 }
 
-void RealSense::open() {
+int RealSense::open() {
     if (run_mode == RunMode::RECORD) {
         if (!camera.has_value()) {
-            printf("camera 未初始化, 无法打开设备\n");
-            return;
+            printf("RealSense 未初始化, 无法打开设备\n");
+            return -1;
         }
 
         // 设置 Genlock Mode
         rs2::sensor cam_sensor = camera->query_sensors().at(0);
         if (cam_sensor.supports(RS2_OPTION_INTER_CAM_SYNC_MODE)) {
             cam_sensor.set_option(RS2_OPTION_INTER_CAM_SYNC_MODE, 4);
-            printf("设置 realsense 为 Genlock Mode\n");
+            printf("设置 RealSense 为 Genlock Mode\n");
         } else {
-            printf("此 realsense 不支持 Genlock Mode\n");
+            printf("此 RealSense 不支持 Genlock Mode\n");
         }
 
         // 启用内部原始时间戳
@@ -110,6 +116,7 @@ void RealSense::open() {
 
         pipe = rs2::pipeline(this->ctx);
         pipe.start(cfg);
+        return 1;
     } else if (this->run_mode == RunMode::PLAY) {
         cfg.enable_device_from_file(file_to_play);
         cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_Z16, 90);
@@ -117,7 +124,9 @@ void RealSense::open() {
 
         pipe = rs2::pipeline(this->ctx);
         pipe.start(cfg);
+        return 1;
     } else {
         printf("Run Mode 非法, 程序退出\n");
+        return -1;
     }
 }

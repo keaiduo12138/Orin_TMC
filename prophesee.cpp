@@ -24,7 +24,10 @@ Prophesee::~Prophesee() {
 }
 
 void Prophesee::record() {
-    this->open();
+    if (this->open() != 1) {
+        printf("Prophesee 打开失败\n");
+        return;
+    }
     cam.ext_trigger().add_callback([&](
         const Metavision::EventExtTrigger *ev_begin,
         const Metavision::EventExtTrigger *ev_end) {
@@ -40,7 +43,10 @@ void Prophesee::record() {
 }
 
 void Prophesee::play() {
-    this->open();
+    if (this->open() != 1) {
+        printf("Prophesee 打开失败\n");
+        return;
+    }
     auto frame_gen = Metavision::PeriodicFrameGenerationAlgorithm(
         cam.geometry().width(),
         cam.geometry().height(),
@@ -73,17 +79,20 @@ void Prophesee::play() {
     }
 }
 
-void Prophesee::open() {
+int Prophesee::open() {
     if (run_mode == RunMode::RECORD) {
         this->cam = Metavision::Camera::from_first_available();
         cam.get_device().get_facility<Metavision::I_TriggerIn>()->enable(Metavision::I_TriggerIn::Channel::Main);
         cam.start_recording(this->file_to_save);
         cam.start();
+        return 1;
     } else if (run_mode == RunMode::PLAY) {
         this->cam = Metavision::Camera::from_file(file_to_play);
         cam.start();
+        return 1;
     } else {
         printf("Run Mode 非法, 程序退出\n");
+        return -1;
     }
 }
 

@@ -18,7 +18,7 @@ public:
     void play();
 
 private:
-    void open();
+    int open();
 
     rs2::context ctx;
     rs2::config cfg;

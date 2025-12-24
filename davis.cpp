@@ -20,6 +20,7 @@ Davis::Davis(const RunMode run_mode, std::string file_dir, std::string file_with
 
 void Davis::record() {
     if (this->open() != 1) {
+        printf("Davis 打开失败\n");
         return;
     }
     printf("Davis 开始录制: %s\n", file_to_save.c_str());
@@ -57,7 +58,10 @@ void Davis::record() {
 }
 
 void Davis::play() {
-    this->open();
+    if (this->open() != 1) {
+        printf("Davis 文件打开失败\n");
+        return;
+    }
     printf("Davis 开始播放: %s\n", file_to_play.c_str());
 
     std::optional<int64_t> lastTimestamp = std::nullopt;

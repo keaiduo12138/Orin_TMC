@@ -28,7 +28,7 @@ public:
     void play();
 
 private:
-    void open();
+    int open();
     void close();
 
     Metavision::Camera cam;
