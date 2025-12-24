@@ -81,7 +81,9 @@ void Prophesee::play() {
 
 int Prophesee::open() {
     if (run_mode == RunMode::RECORD) {
-        this->cam = Metavision::Camera::from_first_available();
+        Metavision::DeviceConfig device_config;
+        device_config.set_format("EVT30");
+        this->cam = Metavision::Camera::from_first_available(device_config);
         cam.get_device().get_facility<Metavision::I_TriggerIn>()->enable(Metavision::I_TriggerIn::Channel::Main);
         cam.start_recording(this->file_to_save);
         cam.start();
