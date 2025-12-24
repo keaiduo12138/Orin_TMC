@@ -89,9 +89,8 @@ void Davis::play() {
 
         // 读取并处理事件，直到时间戳赶上当前帧
         // 一个 getNextEventBatch() 没有33ms的数据，所以会慢于rgb
-        while (true) {
-            auto events = reader->getNextEventBatch();
-            if (!events.has_value() || events->isEmpty()) {
+        while (auto events = reader->getNextEventBatch()) {
+            if (events->isEmpty()) {
                 break;
             }
             
@@ -113,6 +112,8 @@ void Davis::play() {
 
         cv::waitKey(33);
     }
+
+    cv::destroyAllWindows();
 }
 
 int Davis::open() {
