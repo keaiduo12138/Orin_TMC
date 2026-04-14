@@ -31,7 +31,7 @@ void Davis::record() {
         return;
     }
 
-    while (davis->isRunning()) {
+    while (davis->isRunning() && !should_stop()) {
         if (const auto &events = davis->getNextEventBatch(); events.has_value()) {
             writer->writeEvents(*events);
         }
@@ -49,8 +49,22 @@ void Davis::record() {
 
             // debug 打印外触发信息
             for (const auto &trigger : *triggers) {
+                // if (trigger.type == dv::TriggerType::EXTERNAL_SIGNAL_RISING_EDGE) {
+                //     static int64 lastT = 0;
+                //     printf("Davis 检测到信号 | 时间戳: %ld\n", trigger.timestamp);
+                //     printf("间隔: %ld\n", trigger.timestamp - lastT);
+                //     lastT = trigger.timestamp;
+                // }
+                //Cxr add 后面可以把这个判断条件加入到写入特殊事件的里面，从而避免重复触发
+                static int64_t lastAcceptedTs = -1;
+                constexpr int64_t kMinIntervalUs = 30000;
+                
                 if (trigger.type == dv::TriggerType::EXTERNAL_SIGNAL_RISING_EDGE) {
-                    printf("Davis 检测到信号 | 时间戳: %ld\n", trigger.timestamp);
+                    const int64_t dt = (lastAcceptedTs < 0) ? kMinIntervalUs : (trigger.timestamp - lastAcceptedTs);
+                    if (dt >= kMinIntervalUs) {
+                        lastAcceptedTs = trigger.timestamp;
+                        printf("ACCEPT trigger ts=%ld dt=%ld\n", trigger.timestamp, dt);
+                    }
                 }
             }
         }
@@ -80,7 +94,7 @@ void Davis::play() {
 
     int64_t frame_timestamp = 0;
 
-    while (reader->isRunning()) {
+    while (reader->isRunning() && !should_stop()) {
         // 读取帧
         if (const auto frame = reader->getNextFrame(); frame.has_value()) {
             cv::imshow("Davis RGB", frame->image);

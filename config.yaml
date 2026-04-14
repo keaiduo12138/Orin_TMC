@@ -1,10 +1,10 @@
 # 0: undefined
 # 1: record
 # 2: play
-run_mode: 0
-file_dir: "~/Desktop/resource/"
-file_without_suffix: "~/Desktop/resource/date/time"
+run_mode: 1
+file_dir: "/projects/cxr_data/"
+file_without_suffix: "/projects/cxr_data/2026-1-29/15-55-25"
 
 enable_realsense: 1
-enable_prophesee: 1
-enable_davis: 1
+enable_prophesee: 0
+enable_davis: 0

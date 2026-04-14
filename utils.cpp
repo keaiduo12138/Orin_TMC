@@ -1,7 +1,8 @@
 #include "utils.hpp"
 
-#include <chrono>
+#include <atomic>
 #include <cstdlib>
+#include <ctime>
 
 
 std::time_t now_time = std::time(0);
@@ -25,4 +26,14 @@ std::string expand_user(std::string path) {
         }
     }
     return path;
+}
+
+std::atomic_bool g_should_stop{false};
+
+void request_stop() {
+    g_should_stop.store(true, std::memory_order_relaxed);
+}
+
+bool should_stop() {
+    return g_should_stop.load(std::memory_order_relaxed);
 }
