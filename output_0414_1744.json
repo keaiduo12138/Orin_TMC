@@ -1,0 +1,22 @@
+{
+  "input": {
+    "tianmou_dir": "/projects/cxr_data/20260414_17-44-34",
+    "bag_path": "/projects/cxr_data/2026-4-14/17-44-42.bag",
+    "temporal_file": "/projects/cxr_data/20260414_17-44-34/tianmou_timestamp_20260414_174511.csv",
+    "timestamp_source": "TianmoucDataReader (C_timestamp[0] * 10)"
+  },
+  "anchor": {
+    "tianmou_frame_index": 724,
+    "depth_frame_index": 0,
+    "physical_timestamp_us": 1776159909357660
+  },
+  "statistics": {
+    "total_tianmou_frames": 725,
+    "total_depth_frames": 1,
+    "total_color_frames": 650,
+    "common_frame_counters": 642,
+    "valid_triple_aligned": 0,
+    "invalid_no_color": 1
+  },
+  "frames": []
+}

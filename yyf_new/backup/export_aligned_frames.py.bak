@@ -1,0 +1,571 @@
+#!/usr/bin/env python3
+"""
+天眸与RealSense对齐帧导出脚本
+
+功能：
+1. 根据索引文件(output_0317_3.json)读取对齐的天眸和RealSense帧
+2. 导出天眸RGB图像（带时间戳）
+3. 提取RealSense RGB图像
+4. 将对齐的帧合成为一帧（便于检查闪光法对齐效果）
+"""
+
+import os
+import sys
+import json
+import glob
+import re
+import argparse
+import subprocess
+import time
+from pathlib import Path
+from typing import Optional, List, Dict, Any, Tuple
+import cv2
+import numpy as np
+
+# 尝试导入tianmoucv
+try:
+    from tianmoucv.data import TianmoucDataReader
+    HAS_TIANMOUCV = True
+except ImportError:
+    HAS_TIANMOUCV = False
+    print("Warning: tianmoucv 未安装，天眸帧读取可能失败")
+
+
+def to_np(x):
+    """将tensor转换为numpy数组"""
+    import torch
+    if isinstance(x, torch.Tensor):
+        return x.detach().cpu().numpy()
+    return np.asarray(x)
+
+
+def get_tianmou_rgb(reader, frame_idx: int) -> Optional[np.ndarray]:
+    """
+    读取天眸RGB帧
+    
+    Args:
+        reader: TianmoucDataReader实例
+        frame_idx: 帧索引
+    
+    Returns:
+        BGR格式的图像数组
+    """
+    if frame_idx >= len(reader):
+        return None
+    
+    sample = reader[frame_idx]
+    img = to_np(sample["F1"])
+    
+    # 归一化到uint8
+    if img.dtype != np.uint8:
+        if img.max() <= 1.0:
+            img = (img * 255).astype(np.uint8)
+        else:
+            img = img.astype(np.uint8)
+    
+    # 转换为BGR格式
+    if img.ndim == 2:
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    elif img.ndim == 3 and img.shape[2] == 3:
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    else:
+        img_bgr = cv2.cvtColor(img[..., 0], cv2.COLOR_GRAY2BGR)
+    
+    return img_bgr
+
+
+def get_tianmou_timestamp(reader, frame_idx: int) -> Tuple[int, str]:
+    """
+    获取天眸帧时间戳
+    
+    Args:
+        reader: TianmoucDataReader实例
+        frame_idx: 帧索引
+    
+    Returns:
+        (时间戳微秒, 可读时间字符串)
+    """
+    import datetime
+    
+    if frame_idx >= len(reader):
+        return 0, ""
+    
+    sample = reader[frame_idx]
+    meta = sample.get("meta", {})
+    Cts = meta.get("C_timestamp", None)
+    
+    if Cts is None or len(Cts) < 2:
+        ts_us = 0
+    else:
+        ts_start_10us = int(Cts[0])
+        ts_us = ts_start_10us * 10
+    
+    ts_dt = datetime.datetime.fromtimestamp(ts_us / 1_000_000)
+    ts_str = ts_dt.strftime("%H:%M:%S.%f")[:-3]
+    
+    return ts_us, ts_str
+
+
+def extract_realsense_color(bag_path: str, output_dir: str, first_frame: int = 0, last_frame: int = -1) -> str:
+    """
+    使用rs-convert提取RealSense彩色/深度图像
+    
+    Args:
+        bag_path: bag文件路径
+        output_dir: 输出目录
+        first_frame: 起始帧号
+        last_frame: 结束帧号 (-1表示全部)
+    
+    Returns:
+        提取的图像目录路径
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # 首先尝试提取彩色图像
+    cmd = ['rs-convert', '-i', bag_path, '-c', '-p', output_dir + '/']
+    
+    if first_frame > 0:
+        cmd.extend(['-f', str(first_frame)])
+    if last_frame > 0:
+        cmd.extend(['-t', str(last_frame)])
+    
+    print(f"尝试提取彩色图像: {' '.join(cmd)}")
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        if result.returncode == 0:
+            # 检查是否有输出
+            color_files = []
+            for ext in ['*.jpg', '*.png', '*.jpeg']:
+                color_files.extend(glob.glob(os.path.join(output_dir, ext)))
+            
+            if color_files:
+                print(f"✓ 找到 {len(color_files)} 张彩色图像")
+                return output_dir
+    except Exception as e:
+        print(f"Warning: 彩色图像提取失败: {e}")
+    
+    # 如果没有彩色图像，尝试提取深度图像
+    print("  未找到彩色图像，尝试提取深度图像...")
+    depth_dir = os.path.join(output_dir, "depth")
+    os.makedirs(depth_dir, exist_ok=True)
+    
+    cmd = ['rs-convert', '-i', bag_path, '-d', '-p', depth_dir + '/']
+    
+    if first_frame > 0:
+        cmd.extend(['-f', str(first_frame)])
+    if last_frame > 0:
+        cmd.extend(['-t', str(last_frame)])
+    
+    print(f"执行: {' '.join(cmd)}")
+    
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+        if result.returncode == 0:
+            depth_files = []
+            for ext in ['*.jpg', '*.png']:
+                depth_files.extend(glob.glob(os.path.join(depth_dir, ext)))
+            
+            if depth_files:
+                print(f"✓ 找到 {len(depth_files)} 张深度图像")
+                return depth_dir
+    except Exception as e:
+        print(f"Warning: 深度图像提取失败: {e}")
+    
+    return None
+
+
+def find_realsense_depth_images_with_timestamps(color_dir: str) -> Tuple[List[Tuple[int, str, float]], Dict[int, str]]:
+    """
+    查找提取的RealSense深度图像，并建立索引到文件路径的映射
+    
+    Args:
+        color_dir: 深度图像目录
+    
+    Returns:
+        (文件列表 [(frame_idx, filepath, timestamp)], 索引到文件路径的映射)
+    """
+    depth_dir = os.path.join(color_dir, "depth")
+    if not os.path.exists(depth_dir):
+        depth_dir = color_dir
+    
+    # 查找所有图片文件
+    patterns = ['*.jpg', '*.png', '*.jpeg']
+    files = []
+    for pattern in patterns:
+        files.extend(glob.glob(os.path.join(depth_dir, pattern)))
+    
+    if not files:
+        return [], {}
+    
+    print(f"  找到 {len(files)} 个图像文件")
+    
+    # 从文件名中提取时间戳
+    # 文件名格式: _Depth_1773737943398.89819335937500.png
+    result = []
+    for f in files:
+        fname = os.path.basename(f)
+        # 提取时间戳（文件名中下划线后面的数字）
+        match = re.search(r'_(\d+\.?\d*)', fname)
+        if match:
+            timestamp = float(match.group(1))
+            # 时间戳是纳秒或微秒级别，取整为微秒
+            # 看看数值大小：如果大约10^15则是纳秒，10^12以下是微秒
+            if timestamp > 1e14:
+                timestamp_us = int(timestamp / 1000)  # 纳秒转微秒
+            else:
+                timestamp_us = int(timestamp)
+        else:
+            timestamp_us = 0
+        
+        # 帧索引为文件列表中的位置（排序后）
+        result.append((len(result), f, timestamp_us))
+    
+    # 按时间戳排序
+    result.sort(key=lambda x: x[2])
+    
+    # 重新分配索引（从0开始）
+    result = [(i, result[i][1], result[i][2]) for i in range(len(result))]
+    
+    # 建立帧号到文件路径的映射
+    frame_map = {idx: path for idx, path, _ in result}
+    
+    return result, frame_map
+
+
+def get_realsense_timestamps_from_metadata(bag_path: str) -> List[float]:
+    """
+    从bag文件的metadata中获取RealSense帧时间戳
+    
+    Args:
+        bag_path: bag文件路径
+    
+    Returns:
+        时间戳列表（毫秒）
+    """
+    # 使用rs-convert提取metadata
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmd = ['rs-convert', '-i', bag_path, '-d', '-p', tmpdir + '/']
+        subprocess.run(cmd, capture_output=True, timeout=300)
+        
+        # 读取metadata文件
+        metadata_files = glob.glob(f"{tmpdir}/*_Depth_metadata_*.txt")
+        
+        timestamps = []
+        for f in sorted(metadata_files):
+            with open(f, 'r') as fp:
+                content = fp.read()
+                # 提取Time Of Arrival (毫秒)
+                match = re.search(r'Time Of Arrival:\s*(\d+)', content)
+                if match:
+                    timestamps.append(float(match.group(1)))
+        
+        return timestamps
+
+
+def get_realsense_rgb(image_path: str) -> Optional[np.ndarray]:
+    """读取RealSense RGB图像"""
+    img = cv2.imread(image_path)
+    return img
+
+
+def create_comparison_image(tianmou_img: np.ndarray, realsense_img: np.ndarray, 
+                            frame_id: int, tianmou_ts: str, realsense_frame_idx: int,
+                            phase: str, skip: bool, skip_type: str = None) -> np.ndarray:
+    """
+    创建对比图像
+    
+    Args:
+        tianmou_img: 天眸图像 (BGR)
+        realsense_img: RealSense图像 (BGR)
+        frame_id: 帧ID
+        tianmou_ts: 天眸时间戳字符串
+        realsense_frame_idx: RealSense帧索引
+        phase: 阶段 (unstable/stable)
+        skip: 是否跳帧
+        skip_type: 跳帧类型 ("skip"=跳帧/天眸多, "duplicate"=重复帧/realsense多)
+    
+    Returns:
+        合成图像
+    """
+    # 确保图像大小一致（如果不一致，进行缩放）
+    h1, w1 = tianmou_img.shape[:2]
+    h2, w2 = realsense_img.shape[:2]
+    
+    # 取较小的尺寸作为目标
+    target_h = min(h1, h2)
+    target_w = min(w1, w2)
+    
+    # 缩放图像
+    tianmou_resized = cv2.resize(tianmou_img, (target_w, target_h))
+    realsense_resized = cv2.resize(realsense_img, (target_w, target_h))
+    
+    # 水平拼接
+    comparison = np.hstack([tianmou_resized, realsense_resized])
+    
+    # 添加信息栏
+    info_height = 60
+    info_img = np.zeros((info_height, comparison.shape[1], 3), dtype=np.uint8)
+    
+    # 信息文本
+    phase_color = (0, 255, 0) if phase == "stable" else (0, 165, 255)
+    if skip:
+        if skip_type == "duplicate":
+            skip_text = " [DUPLICATE]"
+        else:
+            skip_text = " [SKIP]"
+    else:
+        skip_text = ""
+    
+    text1 = f"Frame: {frame_id} | Phase: {phase}{skip_text}"
+    text2 = f"Tianmou: {tianmou_ts} | RealSense: #{realsense_frame_idx}"
+    
+    cv2.putText(info_img, text1, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    cv2.putText(info_img, text2, (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, phase_color, 2)
+    
+    # 垂直拼接
+    result = np.vstack([comparison, info_img])
+    
+    return result
+
+
+def export_aligned_frames(index_file: str, tianmou_dir: str, bag_path: str,
+                         output_dir: str, max_frames: int = -1,
+                         start_from_stable: bool = True) -> bool:
+    """
+    导出对齐的帧
+    
+    Args:
+        index_file: 索引文件路径 (output_0317_3.json)
+        tianmou_dir: 天眸数据目录
+        bag_path: RealSense bag文件路径
+        output_dir: 输出目录
+        max_frames: 最大导出帧数 (-1表示全部)
+        start_from_stable: 是否从稳定期开始
+    
+    Returns:
+        是否成功
+    """
+    print(f"\n{'='*60}")
+    print(f"对齐帧导出")
+    print(f"{'='*60}")
+    print(f"输入:")
+    print(f"  索引文件: {index_file}")
+    print(f"  天眸目录: {tianmou_dir}")
+    print(f"  Bag文件: {bag_path}")
+    print(f"  输出目录: {output_dir}")
+    print(f"{'='*60}")
+    
+    # 创建输出目录
+    os.makedirs(output_dir, exist_ok=True)
+    tianmou_output = os.path.join(output_dir, "tianmou")
+    realsense_output = os.path.join(output_dir, "realsense")
+    comparison_output = os.path.join(output_dir, "comparison")
+    os.makedirs(tianmou_output, exist_ok=True)
+    os.makedirs(realsense_output, exist_ok=True)
+    os.makedirs(comparison_output, exist_ok=True)
+    
+    # 读取索引文件
+    print("\n读取索引文件...")
+    with open(index_file, 'r') as f:
+        index_data = json.load(f)
+    
+    frames = index_data.get("frames", [])
+    anchor = index_data.get("anchor", {})
+    unstable = index_data.get("unstable_period", {})
+    
+    # 从索引中获取RealSense时间戳（Frame Timestamp），用于图像匹配
+    realsense_timestamps = index_data.get("realsense_timestamps_ms", [])
+    if not realsense_timestamps:
+        # 兼容旧版本索引：从metadata重新读取
+        print("  索引中没有时间戳，从metadata读取...")
+        realsense_timestamps = get_realsense_timestamps_from_metadata(bag_path)
+    print(f"  RealSense时间戳数: {len(realsense_timestamps)}")
+    
+    print(f"  总帧数: {len(frames)}")
+    print(f"  锚定点: 天眸第{anchor.get('tianmou_frame_index', '?')}帧")
+    print(f"  稳定期开始: 天眸第{unstable.get('tianmou_frame_at_stable_start', '?')}帧")
+    
+    # 确定起始帧索引
+    start_idx = 0
+    if start_from_stable:
+        stable_tianmou_idx = unstable.get("tianmou_frame_at_stable_start", 0)
+        # 找到对应的帧ID
+        for i, frame in enumerate(frames):
+            if frame.get("tianmou_idx", 0) >= stable_tianmou_idx:
+                start_idx = i
+                break
+        print(f"  从稳定期第{start_idx}帧开始导出")
+    
+    # 限制导出数量
+    if max_frames > 0:
+        frames = frames[start_idx:start_idx + max_frames]
+        print(f"  限制导出帧数: {max_frames}")
+    else:
+        frames = frames[start_idx:]
+    
+    print(f"  实际导出帧数: {len(frames)}")
+    
+    # 初始化天眸读取器
+    print("\n初始化天眸读取器...")
+    if not HAS_TIANMOUCV:
+        print("Error: tianmoucv 未安装")
+        return False
+    
+    try:
+        tianmou_reader = TianmoucDataReader(tianmou_dir, print_info=False, N=1, camera_idx=0)
+        print(f"  天眸总帧数: {len(tianmou_reader)}")
+    except Exception as e:
+        print(f"Error: 无法初始化天眸读取器: {e}")
+        return False
+    
+    # 提取RealSense图像
+    print("\n提取RealSense深度图像...")
+    realsense_color_dir = os.path.join(output_dir, "realsense_raw")
+    rs_result = extract_realsense_color(bag_path, realsense_color_dir)
+    
+    if not rs_result:
+        print("Warning: RealSense图像提取失败，将跳过RealSense图像")
+        rs_image_map = {}
+    else:
+        # 查找提取的图像
+        _, rs_image_map = find_realsense_depth_images_with_timestamps(realsense_color_dir)
+        print(f"  建立了 {len(rs_image_map)} 个帧的映射")
+    
+    # 导出帧
+    print("\n开始导出帧...")
+    start_time = time.time()
+    exported_count = 0
+    error_count = 0
+    
+    for i, frame in enumerate(frames):
+        frame_id = frame.get("frame_id", i)
+        tianmou_idx = frame.get("tianmou_idx", 0)
+        realsense_idx = frame.get("realsense_idx", 0)
+        phase = frame.get("phase", "unknown")
+        skip = frame.get("skip", False)
+        skip_type = frame.get("skip_type", None)  # 获取跳帧类型
+        
+        # 读取天眸图像
+        tianmou_img = get_tianmou_rgb(tianmou_reader, tianmou_idx)
+        if tianmou_img is None:
+            print(f"Warning: 无法读取天眸第{tianmou_idx}帧")
+            error_count += 1
+            continue
+        
+        # 获取天眸时间戳
+        ts_us, ts_str = get_tianmou_timestamp(tianmou_reader, tianmou_idx)
+        
+        # 保存天眸图像（带时间戳）
+        # 在图像上标注信息
+        tianmou_with_info = tianmou_img.copy()
+        cv2.putText(tianmou_with_info, f"Frame {tianmou_idx}", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.putText(tianmou_with_info, f"Time: {ts_str}", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        
+        tianmou_path = os.path.join(tianmou_output, f"tianmou_{frame_id:04d}.png")
+        cv2.imwrite(tianmou_path, tianmou_with_info)
+        
+        # 读取RealSense图像
+        # 根据realsense_idx从时间戳列表中找到对应的时间戳，然后匹配图像
+        realsense_img = None
+        if realsense_idx < len(realsense_timestamps):
+            # 使用时间戳来匹配图像
+            rs_timestamp_ms = realsense_timestamps[realsense_idx]
+            # 找到时间戳最接近的图像
+            best_match_idx = None
+            best_diff = float('inf')
+            
+            # 扫描所有可能的图像索引
+            for img_idx in range(len(rs_image_map)):
+                # 尝试从这个索引读取图像，获取其时间戳
+                img_path = rs_image_map.get(img_idx)
+                if img_path and os.path.exists(img_path):
+                    # 从文件名提取时间戳
+                    fname = os.path.basename(img_path)
+                    match = re.search(r'_(\d+\.?\d*)', fname)
+                    if match:
+                        ts = float(match.group(1))
+                        if ts > 1e14:
+                            ts_us = int(ts / 1000)
+                        else:
+                            ts_us = int(ts)
+                        ts_ms = ts_us / 1000.0
+                        
+                        diff = abs(ts_ms - rs_timestamp_ms)
+                        if diff < best_diff:
+                            best_diff = diff
+                            best_match_idx = img_idx
+            
+            if best_match_idx is not None:
+                realsense_img = get_realsense_rgb(rs_image_map[best_match_idx])
+                if realsense_img is not None:
+                    pass  # 成功读取
+        
+        if realsense_img is None:
+            print(f"Warning: 无法读取RealSense第{realsense_idx}帧")
+            error_count += 1
+            # 创建占位图
+            realsense_img = np.zeros_like(tianmou_img)
+            cv2.putText(realsense_img, f"No Image (idx={realsense_idx})", (50, tianmou_img.shape[0]//2),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+        
+        # 保存RealSense图像
+        rs_path = os.path.join(realsense_output, f"realsense_{frame_id:04d}.png")
+        cv2.imwrite(rs_path, realsense_img)
+        
+        # 创建对比图像
+        comparison = create_comparison_image(
+            tianmou_img, realsense_img, frame_id, ts_str, realsense_idx, phase, skip, skip_type
+        )
+        comp_path = os.path.join(comparison_output, f"compare_{frame_id:04d}.png")
+        cv2.imwrite(comp_path, comparison)
+        
+        exported_count += 1
+        
+        # 进度输出
+        if (i + 1) % 10 == 0 or i == len(frames) - 1:
+            elapsed = time.time() - start_time
+            eta = elapsed / (i + 1) * (len(frames) - i - 1) if i > 0 else 0
+            print(f"  进度: {i+1}/{len(frames)} ({100*(i+1)/len(frames):.1f}%) | 耗时: {elapsed:.1f}s | ETA: {eta:.1f}s")
+    
+    print(f"\n{'='*60}")
+    print(f"导出完成!")
+    print(f"  成功导出: {exported_count} 帧")
+    print(f"  错误: {error_count} 帧")
+    print(f"  输出目录: {output_dir}")
+    print(f"    - 天眸图像: {tianmou_output}")
+    print(f"    - RealSense图像: {realsense_output}")
+    print(f"    - 对比图像: {comparison_output}")
+    print(f"{'='*60}")
+    
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(description="天眸与RealSense对齐帧导出")
+    parser.add_argument("--index", "-i", required=True, help="索引文件 (JSON)")
+    parser.add_argument("--tianmou-dir", "-t", required=True, help="天眸数据目录")
+    parser.add_argument("--bag", "-b", required=True, help="RealSense bag文件")
+    parser.add_argument("--output", "-o", required=True, help="输出目录")
+    parser.add_argument("--max-frames", "-m", type=int, default=-1, help="最大导出帧数 (-1表示全部)")
+    parser.add_argument("--include-unstable", action="store_true", help="包含不稳定期的帧")
+    
+    args = parser.parse_args()
+    
+    success = export_aligned_frames(
+        args.index,
+        args.tianmou_dir,
+        args.bag,
+        args.output,
+        max_frames=args.max_frames,
+        start_from_stable=not args.include_unstable
+    )
+    
+    return 0 if success else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

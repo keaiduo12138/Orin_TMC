@@ -1,0 +1,27 @@
+[
+{
+  "directory": "/home/nvidia/Desktop/cxr_multi_sensor/yyf",
+  "command": "/usr/bin/g++-13 -DBOOST_FILESYSTEM_NO_LIB -DBOOST_FILESYSTEM_STATIC_LINK=1 -DBOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED -DBOOST_TIMER_NO_LIB -DBOOST_TIMER_STATIC_LINK -DELPP_NO_DEFAULT_LOG_FILE -DFMT_SHARED -DHAVE_PTHREADS=1 -DOS_LINUX=1 -DOS_UNIX=1 -D_DEFAULT_SOURCE=1 -D_FILE_OFFSET_BITS=64 -D_XOPEN_SOURCE=700 -isystem /usr/local/include/opencv4 -isystem /usr/include/eigen3 -isystem /usr/include/libusb-1.0 -O3 -DNDEBUG -pthread -std=gnu++20 -o CMakeFiles/main.dir/davis.cpp.o -c /home/nvidia/Desktop/cxr_multi_sensor/davis.cpp",
+  "file": "/home/nvidia/Desktop/cxr_multi_sensor/davis.cpp"
+},
+{
+  "directory": "/home/nvidia/Desktop/cxr_multi_sensor/yyf",
+  "command": "/usr/bin/g++-13 -DBOOST_FILESYSTEM_NO_LIB -DBOOST_FILESYSTEM_STATIC_LINK=1 -DBOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED -DBOOST_TIMER_NO_LIB -DBOOST_TIMER_STATIC_LINK -DELPP_NO_DEFAULT_LOG_FILE -DFMT_SHARED -DHAVE_PTHREADS=1 -DOS_LINUX=1 -DOS_UNIX=1 -D_DEFAULT_SOURCE=1 -D_FILE_OFFSET_BITS=64 -D_XOPEN_SOURCE=700 -isystem /usr/local/include/opencv4 -isystem /usr/include/eigen3 -isystem /usr/include/libusb-1.0 -O3 -DNDEBUG -pthread -std=gnu++20 -o CMakeFiles/main.dir/main.cpp.o -c /home/nvidia/Desktop/cxr_multi_sensor/main.cpp",
+  "file": "/home/nvidia/Desktop/cxr_multi_sensor/main.cpp"
+},
+{
+  "directory": "/home/nvidia/Desktop/cxr_multi_sensor/yyf",
+  "command": "/usr/bin/g++-13 -DBOOST_FILESYSTEM_NO_LIB -DBOOST_FILESYSTEM_STATIC_LINK=1 -DBOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED -DBOOST_TIMER_NO_LIB -DBOOST_TIMER_STATIC_LINK -DELPP_NO_DEFAULT_LOG_FILE -DFMT_SHARED -DHAVE_PTHREADS=1 -DOS_LINUX=1 -DOS_UNIX=1 -D_DEFAULT_SOURCE=1 -D_FILE_OFFSET_BITS=64 -D_XOPEN_SOURCE=700 -isystem /usr/local/include/opencv4 -isystem /usr/include/eigen3 -isystem /usr/include/libusb-1.0 -O3 -DNDEBUG -pthread -std=gnu++20 -o CMakeFiles/main.dir/prophesee.cpp.o -c /home/nvidia/Desktop/cxr_multi_sensor/prophesee.cpp",
+  "file": "/home/nvidia/Desktop/cxr_multi_sensor/prophesee.cpp"
+},
+{
+  "directory": "/home/nvidia/Desktop/cxr_multi_sensor/yyf",
+  "command": "/usr/bin/g++-13 -DBOOST_FILESYSTEM_NO_LIB -DBOOST_FILESYSTEM_STATIC_LINK=1 -DBOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED -DBOOST_TIMER_NO_LIB -DBOOST_TIMER_STATIC_LINK -DELPP_NO_DEFAULT_LOG_FILE -DFMT_SHARED -DHAVE_PTHREADS=1 -DOS_LINUX=1 -DOS_UNIX=1 -D_DEFAULT_SOURCE=1 -D_FILE_OFFSET_BITS=64 -D_XOPEN_SOURCE=700 -isystem /usr/local/include/opencv4 -isystem /usr/include/eigen3 -isystem /usr/include/libusb-1.0 -O3 -DNDEBUG -pthread -std=gnu++20 -o CMakeFiles/main.dir/realsense.cpp.o -c /home/nvidia/Desktop/cxr_multi_sensor/realsense.cpp",
+  "file": "/home/nvidia/Desktop/cxr_multi_sensor/realsense.cpp"
+},
+{
+  "directory": "/home/nvidia/Desktop/cxr_multi_sensor/yyf",
+  "command": "/usr/bin/g++-13 -DBOOST_FILESYSTEM_NO_LIB -DBOOST_FILESYSTEM_STATIC_LINK=1 -DBOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED -DBOOST_TIMER_NO_LIB -DBOOST_TIMER_STATIC_LINK -DELPP_NO_DEFAULT_LOG_FILE -DFMT_SHARED -DHAVE_PTHREADS=1 -DOS_LINUX=1 -DOS_UNIX=1 -D_DEFAULT_SOURCE=1 -D_FILE_OFFSET_BITS=64 -D_XOPEN_SOURCE=700 -isystem /usr/local/include/opencv4 -isystem /usr/include/eigen3 -isystem /usr/include/libusb-1.0 -O3 -DNDEBUG -pthread -std=gnu++20 -o CMakeFiles/main.dir/utils.cpp.o -c /home/nvidia/Desktop/cxr_multi_sensor/utils.cpp",
+  "file": "/home/nvidia/Desktop/cxr_multi_sensor/utils.cpp"
+}
+]

@@ -1,0 +1,1054 @@
+#!/usr/bin/env python3
+"""
+天眸与RealSense后处理对齐脚本
+
+功能：
+1. 读取物理基准时间戳、天眸帧时间戳、RealSense帧时间戳
+2. 找到锚定点（天眸第n帧 = RealSense第1帧）
+3. 确定不稳定期结束帧
+4. 检测稳定期跳帧
+5. 输出JSON索引文件
+"""
+
+import os
+import sys
+import json
+import re
+import glob
+import subprocess
+import argparse
+import time
+from pathlib import Path
+from typing import Optional, Tuple, List, Dict, Any
+
+# 常量配置
+DEFAULT_TEMPORAL_DIR = "/projects/cxr_data/temporal_files"
+DEFAULT_CXR_DATA_DIR = "/projects/cxr_data"
+
+# 硬件触发参数
+DT_NORMAL_MS = 33.33  # 正常帧间隔 (~30fps)
+DT_THRESHOLD_MS = DT_NORMAL_MS * 1.5  # 49.995ms, 超过则判定跳帧
+UNSTABLE_FRAME_COUNT = 150  # 不稳定期帧数 (x=150)
+DT_MATCH_THRESHOLD_MS = 0.1  # 不稳定期对齐阈值 (0.1ms)
+
+
+# ========== 进度追踪类 ==========
+class ProgressTracker:
+    """进度追踪器"""
+    
+    def __init__(self):
+        self.stages = []
+        self.current_stage = None
+        self.start_time = time.time()
+        self.stage_start_time = None
+    
+    def start_stage(self, stage_name: str, description: str = ""):
+        """开始一个新阶段"""
+        # 如果有上一个阶段，总结用时
+        if self.current_stage is not None:
+            self._finish_stage()
+        
+        self.current_stage = stage_name
+        self.stage_start_time = time.time()
+        self.stages.append({
+            "name": stage_name,
+            "description": description,
+            "start_time": self.stage_start_time,
+            "status": "running"
+        })
+        
+        # 打印阶段开始
+        elapsed = time.time() - self.start_time
+        print(f"\n[{elapsed:.1f}s] {'='*50}")
+        print(f"[{elapsed:.1f}s] 阶段 {len(self.stages)}: {stage_name}")
+        if description:
+            print(f"[{elapsed:.1f}s] {description}")
+        print(f"[{elapsed:.1f}s] {'='*50}")
+    
+    def update_progress(self, current: int, total: int, prefix: str = "进度"):
+        """更新进度"""
+        if total == 0:
+            return
+        percent = current / total * 100
+        elapsed = time.time() - (self.stage_start_time or time.time())
+        
+        # 预估剩余时间
+        if current > 0:
+            eta = elapsed / current * (total - current)
+            eta_str = f"ETA: {eta:.1f}s"
+        else:
+            eta_str = ""
+        
+        print(f"\r[{time.time()-self.start_time:.1f}s] {prefix}: {current}/{total} ({percent:.1f}%) {eta_str}", end="", flush=True)
+    
+    def _finish_stage(self):
+        """结束当前阶段"""
+        if self.current_stage and self.stage_start_time:
+            elapsed = time.time() - self.stage_start_time
+            for stage in reversed(self.stages):
+                if stage["name"] == self.current_stage and stage["status"] == "running":
+                    stage["status"] = "completed"
+                    stage["elapsed"] = elapsed
+                    break
+            
+            print(f"\n[{time.time()-self.start_time:.1f}s] ✓ {self.current_stage} 完成 (耗时: {elapsed:.1f}s)")
+    
+    def finish(self):
+        """结束所有阶段"""
+        if self.current_stage is not None:
+            self._finish_stage()
+        
+        total_elapsed = time.time() - self.start_time
+        print(f"\n{'='*50}")
+        print(f"总耗时: {total_elapsed:.1f}s")
+        print(f"{'='*50}")
+        
+        # 打印各阶段用时
+        print("\n各阶段用时:")
+        for i, stage in enumerate(self.stages, 1):
+            elapsed = stage.get("elapsed", 0)
+            print(f"  {i}. {stage['name']}: {elapsed:.1f}s")
+
+
+# 全局进度追踪器
+progress = ProgressTracker()
+
+
+def read_temporal_timestamp(filepath: str) -> Optional[int]:
+    """
+    读取物理基准时间戳
+    
+    Args:
+        filepath: 时间戳文件路径
+    
+    Returns:
+        Unix微秒时间戳，如果没有效数据则返回None
+    """
+    try:
+        with open(filepath, 'r') as f:
+            lines = f.readlines()
+            for line in lines[1:]:  # 跳过表头
+                parts = line.strip().split(',')
+                if len(parts) >= 2 and parts[0] == 'ok':
+                    return int(parts[1])
+    except Exception as e:
+        print(f"Error: 读取时间戳文件失败: {e}")
+    return None
+
+
+def find_matching_temporal_file(temporal_dir: str, target_time_sec: float) -> Optional[str]:
+    """
+    在temporal_files目录中找到与目标时间匹配的时间戳文件
+    
+    Args:
+        temporal_dir: temporal_files目录路径
+        target_time_sec: 目标Unix时间(秒)
+    
+    Returns:
+        匹配的文件路径
+    """
+    pattern = os.path.join(temporal_dir, "tianmou_timestamp_*.csv")
+    files = glob.glob(pattern)
+    
+    best_match = None
+    best_diff = float('inf')
+    
+    for filepath in files:
+        try:
+            ts_us = read_temporal_timestamp(filepath)
+            if ts_us is None:
+                continue
+            ts_sec = ts_us / 1_000_000
+            diff = abs(ts_sec - target_time_sec)
+            if diff < best_diff:
+                best_diff = diff
+                best_match = filepath
+        except Exception as e:
+            continue
+    
+    if best_match and best_diff < 60:  # 60秒内认为是匹配的
+        print(f"找到匹配的时间戳文件: {os.path.basename(best_match)}, 差值: {best_diff:.2f}秒")
+        return best_match
+    
+    return None
+
+
+def read_tianmou_timestamps_from_info(info_file: str) -> List[int]:
+    """
+    从info.txt文件读取天眸帧时间戳（不推荐，请使用read_tianmou_timestamps_from_reader）
+    
+    注意：这个方法读取的时间戳与C_timestamp有偏差，建议使用TianmoucDataReader
+    
+    Args:
+        info_file: info_xxx.txt 文件路径
+    
+    Returns:
+        时间戳列表(微秒)
+    """
+    timestamps = []
+    with open(info_file, 'r') as f:
+        for line in f:
+            if 'unix standard time stamp:' in line:
+                match = re.search(r'unix standard time stamp:(\d+)s,(\d+)us', line)
+                if match:
+                    sec = int(match.group(1))
+                    us = int(match.group(2))
+                    ts_us = sec * 1_000_000 + us
+                    timestamps.append(ts_us)
+    return timestamps
+
+
+def read_tianmou_timestamps_from_reader(tianmou_dir: str, camera_idx: int = 0) -> List[int]:
+    """
+    使用 TianmoucDataReader 读取天眸帧时间戳
+    
+    这是更精确的方法，C_timestamp[0] 与物理时间戳完全匹配
+    
+    Args:
+        tianmou_dir: 天眸数据目录
+        camera_idx: 相机索引 (0=cone, 1=rod)
+    
+    Returns:
+        时间戳列表(微秒)
+    """
+    global progress
+    
+    try:
+        from tianmoucv.data import TianmoucDataReader
+    except (ImportError, AttributeError, Exception) as e:
+        print(f"Warning: 无法导入 tianmoucv ({e})，使用 info.txt 作为备选")
+        # 备选：从info.txt读取
+        cone_dir = os.path.join(tianmou_dir, "cone")
+        rod_dir = os.path.join(tianmou_dir, "rod")
+        
+        info_file = None
+        if os.path.exists(cone_dir):
+            info_files = glob.glob(f"{cone_dir}/info_*.txt")
+            if info_files:
+                info_file = info_files[0]
+        
+        if not info_file and os.path.exists(rod_dir):
+            info_files = glob.glob(f"{rod_dir}/info_*.txt")
+            if info_files:
+                info_file = info_files[0]
+        
+        if info_file:
+            print(f"使用 info.txt 作为备选: {info_file}")
+            return read_tianmou_timestamps_from_info(info_file)
+        return []
+    
+    # 使用 TianmoucDataReader
+    print(f"初始化 TianmoucDataReader...")
+    reader = TianmoucDataReader(tianmou_dir, print_info=False, N=1, camera_idx=camera_idx, strict=True)
+    total_frames = len(reader)
+    print(f"总帧数: {total_frames}")
+    
+    timestamps = []
+    start_time = time.time()
+    
+    for i in range(total_frames):
+        sample = reader[i]
+        meta = sample.get("meta", {})
+        Cts = meta.get("C_timestamp", None)
+        
+        if Cts is None or len(Cts) < 2:
+            ts_us = 0
+        else:
+            # C_timestamp[0] 是帧开始时间，单位是10微秒
+            ts_start_10us = int(Cts[0])
+            ts_us = ts_start_10us * 10
+        
+        timestamps.append(ts_us)
+        
+        # 每50帧输出一次进度
+        if (i + 1) % 50 == 0 or i == total_frames - 1:
+            elapsed = time.time() - start_time
+            percent = (i + 1) / total_frames * 100
+            eta = elapsed / (i + 1) * (total_frames - i - 1) if i > 0 else 0
+            print(f"  天眸帧读取: {i+1}/{total_frames} ({percent:.1f}%) | 耗时: {elapsed:.1f}s | ETA: {eta:.1f}s")
+    
+    print(f"✓ 天眸帧读取完成, 共 {len(timestamps)} 帧")
+    return timestamps
+
+
+def find_anchor_tianmou_frame(tianmou_timestamps: List[int], physical_ts_us: int) -> Optional[int]:
+    """
+    在天眸时间戳序列中找到与物理时间戳最接近的帧
+    
+    Args:
+        tianmou_timestamps: 天眸帧时间戳列表(微秒)
+        physical_ts_us: 物理基准时间戳(微秒)
+    
+    Returns:
+        匹配的天眸帧索引
+    """
+    if not tianmou_timestamps:
+        return None
+    
+    # 找最近的帧（不要求完全匹配）
+    min_diff = float('inf')
+    closest_idx = 0
+    
+    for i, ts in enumerate(tianmou_timestamps):
+        diff = abs(ts - physical_ts_us)
+        if diff < min_diff:
+            min_diff = diff
+            closest_idx = i
+    
+    print(f"找到锚定点: 天眸第{closest_idx}帧 ≈ 物理时间戳")
+    print(f"  天眸帧时间戳: {tianmou_timestamps[closest_idx]} us")
+    print(f"  物理时间戳: {physical_ts_us} us")
+    print(f"  差值: {min_diff} us ({min_diff/1000:.3f} ms)")
+    
+    return closest_idx
+
+
+def extract_realsense_metadata(bag_path: str, output_dir: str = "/projects/cxr_data/metadata_temp") -> str:
+    """
+    使用rs-convert提取RealSense metadata，Color 和 Depth 分别提取到不同子目录，避免文件覆盖。
+
+    Args:
+        bag_path: bag文件路径
+        output_dir: 输出目录
+
+    Returns:
+        metadata文件所在目录（会在此目录下创建 color/ 和 depth/ 子目录）
+    """
+    global progress
+
+    color_dir = os.path.join(output_dir, "color")
+    depth_dir = os.path.join(output_dir, "depth")
+    os.makedirs(color_dir, exist_ok=True)
+    os.makedirs(depth_dir, exist_ok=True)
+
+    # 检查是否已经提取过
+    color_meta = sorted(glob.glob(os.path.join(color_dir, "*_Color_metadata_*.txt")))
+    depth_meta = sorted(glob.glob(os.path.join(depth_dir, "*_Depth_metadata_*.txt")))
+    if color_meta or depth_meta:
+        print(f"找到已提取的metadata文件: {output_dir}")
+        print(f"  Color: {len(color_meta)} 个文件")
+        print(f"  Depth: {len(depth_meta)} 个文件")
+        return output_dir  # read_realsense_timestamps 已知 color/ 和 depth/ 子目录结构
+
+    print(f"正在提取RealSense metadata...")
+    print(f"  Bag文件: {bag_path}")
+    bag_size_mb = os.path.getsize(bag_path) / (1024 * 1024)
+    print(f"  Bag大小: {bag_size_mb:.1f} MB")
+
+    start_time = time.time()
+
+    # 提取 Color 到 color/ 子目录
+    cmd_color = ['rs-convert', '-i', bag_path, '-c', '-p', os.path.join(color_dir, 'frame') + '_']
+    print(f"  执行命令: rs-convert -i {bag_path} -c -p {color_dir}/frame_")
+    result = subprocess.run(cmd_color, capture_output=True, text=True, timeout=300)
+    if result.returncode != 0:
+        print(f"Warning: rs-convert -c 失败: {result.stderr}")
+
+    # 提取 Depth 到 depth/ 子目录
+    cmd_depth = ['rs-convert', '-i', bag_path, '-d', '-p', os.path.join(depth_dir, 'frame') + '_']
+    print(f"  执行命令: rs-convert -i {bag_path} -d -p {depth_dir}/frame_")
+    result = subprocess.run(cmd_depth, capture_output=True, text=True, timeout=300)
+    if result.returncode != 0:
+        print(f"Warning: rs-convert -d 失败: {result.stderr}")
+
+    elapsed = time.time() - start_time
+
+    # 统计提取的文件数
+    color_meta = sorted(glob.glob(os.path.join(color_dir, "*_Color_metadata_*.txt")))
+    depth_meta = sorted(glob.glob(os.path.join(depth_dir, "*_Depth_metadata_*.txt")))
+    print(f"✓ RealSense metadata提取完成")
+    print(f"  Color metadata: {len(color_meta)} 个文件")
+    print(f"  Depth metadata: {len(depth_meta)} 个文件")
+    print(f"  耗时: {elapsed:.1f}s")
+    return output_dir
+
+
+def read_realsense_timestamps(metadata_dir: str, temporal_timestamp_us: int = None,
+                               preferred_stream: str = "auto") -> Tuple[List[int], List[int], Dict[str, int]]:
+    """
+    从metadata文件读取RealSense时间戳
+    
+    Args:
+        metadata_dir: metadata文件所在目录
+        temporal_timestamp_us: 物理基准时间戳（微秒），用于过滤只保留该时间点之后的帧
+        preferred_stream: 优先使用的流 ("color", "depth", "auto")
+                         "auto" 会自动检测可用的流
+    
+    Returns:
+        (Frame Timestamp列表[毫秒], 帧号列表, 元数据统计信息)
+        元数据统计信息包含: color_count, depth_count, used_stream, total_before_filter
+    """
+    # 查找 Color metadata（优先子目录，其次根目录兜底）
+    color_meta_dir = os.path.join(metadata_dir, "color")
+    depth_meta_dir = os.path.join(metadata_dir, "depth")
+    color_metadata_files = sorted(glob.glob(os.path.join(color_meta_dir, "*_Color_metadata_*.txt")))
+    if not color_metadata_files:
+        color_metadata_files = sorted(glob.glob(os.path.join(color_meta_dir, "timestamps_*_Color_metadata_*.txt")))
+    if not color_metadata_files:  # 兜底：可能之前已提取到根目录
+        color_metadata_files = sorted(glob.glob(f"{metadata_dir}/*_Color_metadata_*.txt"))
+        if not color_metadata_files:
+            color_metadata_files = sorted(glob.glob(f"{metadata_dir}/timestamps_*_Color_metadata_*.txt"))
+
+    # 查找 Depth metadata
+    depth_metadata_files = sorted(glob.glob(os.path.join(depth_meta_dir, "*_Depth_metadata_*.txt")))
+    if not depth_metadata_files:
+        depth_metadata_files = sorted(glob.glob(os.path.join(depth_meta_dir, "timestamps_*_Depth_metadata_*.txt")))
+    if not depth_metadata_files:  # 兜底
+        depth_metadata_files = sorted(glob.glob(f"{metadata_dir}/*_Depth_metadata_*.txt"))
+        if not depth_metadata_files:
+            depth_metadata_files = sorted(glob.glob(f"{metadata_dir}/timestamps_*_Depth_metadata_*.txt"))
+    
+    # 统计信息
+    stats = {
+        "color_count": len(color_metadata_files),
+        "depth_count": len(depth_metadata_files),
+        "used_stream": None,
+        "total_before_filter": 0
+    }
+    
+    print(f"  找到 Color metadata: {len(color_metadata_files)} 个")
+    print(f"  找到 Depth metadata: {len(depth_metadata_files)} 个")
+    
+    # 选择使用的流
+    metadata_files = []
+    if preferred_stream == "color":
+        metadata_files = color_metadata_files
+        stats["used_stream"] = "color"
+    elif preferred_stream == "depth":
+        metadata_files = depth_metadata_files
+        stats["used_stream"] = "depth"
+    elif preferred_stream == "auto":
+        # 自动选择：如果两者都有，优先使用depth；否则用有的
+        if depth_metadata_files:
+            metadata_files = depth_metadata_files
+            stats["used_stream"] = "depth"
+        elif color_metadata_files:
+            metadata_files = color_metadata_files
+            stats["used_stream"] = "color"
+        else:
+            print(f"Warning: 未找到任何metadata文件 in {metadata_dir}")
+            return [], [], stats
+    else:
+        print(f"Warning: 未知的preferred_stream: {preferred_stream}")
+        return [], [], stats
+    
+    if not metadata_files:
+        print(f"Warning: 未找到metadata文件 in {metadata_dir}")
+        return [], [], stats
+    
+    # 记录过滤前的总数
+    stats["total_before_filter"] = len(metadata_files)
+    print(f"  过滤前metadata数量: {stats['total_before_filter']}")
+    
+    print(f"  找到 {len(metadata_files)} 个metadata文件")
+    
+    frame_timestamps_us = []  # Frame Timestamp (毫秒，转换为微秒)
+    frame_numbers = []
+    time_of_arrivals = []  # Time Of Arrival (毫秒)
+    
+    for f in metadata_files:
+        with open(f, 'r') as fp:
+            content = fp.read()
+            
+            # 提取Frame Timestamp (毫秒，需要乘以1000转为微秒)
+            match = re.search(r'Frame Timestamp:\s*(\d+)', content)
+            if match:
+                ft_us = int(match.group(1))
+                # Frame Timestamp 单位是微秒(us)，转换为毫秒(ms)
+                frame_timestamps_us.append(ft_us / 1000.0)  # 转为毫秒
+            
+            # 提取Time Of Arrival (毫秒，Unix时间戳)
+            toa_match = re.search(r'Time Of Arrival:\s*(\d+)', content)
+            if toa_match:
+                time_of_arrivals.append(int(toa_match.group(1)))
+            
+            # 提取Frame Counter
+            fc_match = re.search(r'Frame Counter:\s*(\d+)', content)
+            fc = int(fc_match.group(1)) if fc_match else len(frame_numbers)
+            frame_numbers.append(fc)
+    
+    # 按Time Of Arrival排序（确保帧是按时间顺序）
+    if time_of_arrivals and len(time_of_arrivals) == len(frame_timestamps_us):
+        sorted_pairs = sorted(zip(time_of_arrivals, frame_timestamps_us, frame_numbers))
+        time_of_arrivals, frame_timestamps_us, frame_numbers = zip(*sorted_pairs)
+        time_of_arrivals = list(time_of_arrivals)
+        frame_timestamps_us = list(frame_timestamps_us)
+        frame_numbers = list(frame_numbers)
+    
+    # 过滤：如果提供了temporal_timestamp，只保留temporal之后的帧
+    if temporal_timestamp_us is not None:
+        # temporal是微秒，ToA是毫秒，需要转换
+        temporal_ms = temporal_timestamp_us / 1000
+
+        # 找到temporal时间点对应的帧
+        # 容差 500ms：录制开始时间通常稍有抖动
+        filtered_frames = []
+        filtered_toa = []
+        for i, toa in enumerate(time_of_arrivals):
+            if toa >= temporal_ms - 500:  # 留500ms容差，兼容录制启动抖动
+                filtered_frames.append((toa, frame_timestamps_us[i] if i < len(frame_timestamps_us) else 0,
+                                       frame_numbers[i] if i < len(frame_numbers) else i))
+                filtered_toa.append(toa)
+        
+        if filtered_frames:
+            print(f"  过滤后保留 {len(filtered_frames)} 帧 (从temporal时间点开始)")
+            time_of_arrivals = filtered_toa
+            frame_timestamps_us = [f[1] for f in filtered_frames]
+            frame_numbers = [f[2] for f in filtered_frames]
+    
+    # 注意：不再进行去重，保留所有帧（包括Frame Timestamp相同的重复帧）
+    # 去重会在 detect_skipped_frames 中统一处理，标记为 duplicate 类型
+    # 统计信息
+    if frame_timestamps_us:
+        print(f"  RealSense帧数（含重复帧）: {len(frame_timestamps_us)}")
+        if len(frame_timestamps_us) > 1:
+            # 用Frame Timestamp计算帧间隔
+            dts = [frame_timestamps_us[i+1] - frame_timestamps_us[i] for i in range(min(10, len(frame_timestamps_us)-1))]
+            dts_valid = [d for d in dts if d > 0]
+            if dts_valid:
+                avg_ms = sum(dts_valid) / len(dts_valid)  # 已经是ms
+                print(f"  平均帧间隔: {avg_ms:.2f} ms")
+                print(f"  对应帧率: {1000/avg_ms:.1f} fps")
+    
+    return frame_timestamps_us, frame_numbers, stats
+
+
+def find_unstable_end_y(tianmou_timestamps: List[int], anchor_n: int,
+                        realsense_ts_ms: List[int], 
+                        x: int = UNSTABLE_FRAME_COUNT) -> int:
+    """
+    找到不稳定期结束时的天眸帧偏移y
+    
+    Args:
+        tianmou_timestamps: 天眸时间戳列表(微秒)
+        anchor_n: 锚定点天眸帧索引
+        realsense_ts_ms: RealSense Frame Timestamp列表(毫秒)
+        x: 不稳定期帧数(默认150)
+    
+    Returns:
+        y值，即从锚定点到稳定期结束的天眸帧偏移量
+    """
+    if len(realsense_ts_ms) <= x:
+        print(f"Warning: RealSense帧数({len(realsense_ts_ms)})少于x+1({x+1})，使用最大可用帧数")
+        x = len(realsense_ts_ms) - 1
+    
+    # 计算RealSense第1+x帧与第1帧的时间差(毫秒)
+    realsense_delta_ms = realsense_ts_ms[x] - realsense_ts_ms[0]
+    print(f"RealSense第{x+1}帧与第1帧的时间差: {realsense_delta_ms:.3f}ms")
+    
+    # 寻找最小的y，使得天眸时间差与RealSense时间差相差小于阈值
+    anchor_ts_us = tianmou_timestamps[anchor_n]
+    best_y = x
+    best_diff = float('inf')
+    
+    for y in range(x, len(tianmou_timestamps) - anchor_n):
+        tianmou_delta_us = tianmou_timestamps[anchor_n + y] - anchor_ts_us
+        tianmou_delta_ms = tianmou_delta_us / 1000.0  # 微秒转毫秒
+        diff = abs(tianmou_delta_ms - realsense_delta_ms)
+        
+        if diff < best_diff:
+            best_diff = diff
+            best_y = y
+        
+        if diff < DT_MATCH_THRESHOLD_MS:  # 毫秒阈值
+            print(f"找到匹配: y={y}, 天眸时间差={tianmou_delta_ms:.3f}ms, 差值={diff:.2f}ms")
+            return y
+    
+    print(f"Warning: 未找到完美匹配，最小差值: {best_diff:.2f}ms at y={best_y}")
+    return best_y
+
+
+def detect_skipped_frames(realsense_ts_ms: List[int], start_idx: int = 1) -> List[dict]:
+    """
+    检测跳帧和重复帧，通过分析dt与理论帧间隔的比值
+    
+    dt > 1.5*33ms: 跳帧（天眸多拍了，realsense没被触发）
+    dt = 0: 重复帧（两个realsense帧对应同一个天眸帧）
+    
+    Args:
+        realsense_ts_ms: RealSense Frame Timestamp列表(毫秒)
+        start_idx: 开始检查的索引
+    
+    Returns:
+        跳帧信息列表，每项包含 {frame_idx, dt, skip_count, type}
+            - type: "skip" 表示跳帧（天眸多帧），"duplicate" 表示重复帧（realsense多帧）
+    """
+    skipped = []
+    dt_threshold_ms = DT_THRESHOLD_MS  # 毫秒
+    EXPECTED_INTERVAL_MS = 33.0  # 理论帧间隔
+    
+    for i in range(start_idx + 1, len(realsense_ts_ms)):
+        dt = realsense_ts_ms[i] - realsense_ts_ms[i-1]
+        
+        if dt == 0:
+            # dt=0 表示两个realsense帧对应同一个天眸帧（重复帧）
+            # 跳过这个重复的realsense帧
+            skipped.append({"frame_idx": i, "dt": dt, "skip_count": 1, "type": "duplicate"})
+            print(f"检测到重复帧: 第{i}帧, dt={dt:.2f}ms (两帧realsense对应一帧天眸)")
+        elif dt > dt_threshold_ms:
+            # 计算跳帧数：dt / 33 并四舍五入
+            skip_count = round(dt / EXPECTED_INTERVAL_MS) - 1
+            skip_count = max(1, skip_count)  # 至少跳1帧
+            
+            skipped.append({"frame_idx": i, "dt": dt, "skip_count": skip_count, "type": "skip"})
+            print(f"检测到跳帧: 第{i}帧, dt={dt:.2f}ms, 跳{skip_count}帧 ({skip_count+1}帧间隔)")
+
+    return skipped
+
+
+def build_frame_mapping(anchor_n: int, 
+                       unstable_end_y: int, 
+                       unstable_end_realsense_idx: int,
+                       tianmou_timestamps: List[int], 
+                       realsense_ts_ms: List[int],
+                       skipped_frames: List[dict]) -> List[Dict[str, Any]]:
+    """
+    构建帧对齐映射
+    
+    处理两种特殊情况：
+    - dt > 1.5*33ms: 跳帧（天眸多拍了，realsense没被触发）-> 天眸索引跳过多帧
+    - dt = 0: 重复帧（两个realsense帧对应同一个天眸帧）-> 跳过这个realsense帧
+    
+    Args:
+        anchor_n: 锚定点天眸帧索引
+        unstable_end_y: 不稳定期结束时的天眸帧偏移
+        unstable_end_realsense_idx: 不稳定期结束时的RealSense帧索引
+        tianmou_timestamps: 天眸时间戳列表
+        realsense_ts_ms: RealSense Frame Timestamp列表
+        skipped_frames: 跳帧信息列表，每项包含 {frame_idx, dt, skip_count, type}
+    
+    Returns:
+        帧映射列表
+    """
+    frames = []
+    
+    # 将跳帧信息转换为索引->信息的映射
+    # 包含 skip_count 和 type ("skip" 或 "duplicate")
+    skip_info = {sf["frame_idx"]: {"skip_count": sf["skip_count"], "type": sf.get("type", "skip")} 
+                 for sf in skipped_frames}
+    
+    # 不稳定期的帧数
+    unstable_realsense_count = unstable_end_realsense_idx + 1
+    
+    frame_id = 0
+    tianmou_idx = anchor_n
+    realsense_idx = 0
+    
+    max_frames = max(len(tianmou_timestamps) - anchor_n, len(realsense_ts_ms))
+    
+    for i in range(max_frames):
+        if realsense_idx >= len(realsense_ts_ms):
+            break
+            
+        if i < unstable_realsense_count:
+            # 不稳定期
+            dt_ms = None if realsense_idx == 0 else realsense_ts_ms[realsense_idx] - realsense_ts_ms[realsense_idx-1]
+            frames.append({
+                "frame_id": frame_id,
+                "tianmou_idx": tianmou_idx,
+                "realsense_idx": realsense_idx,
+                "dt_ms": round(dt_ms, 3) if dt_ms is not None else None,
+                "skip": False,
+                "skip_type": None,
+                "phase": "unstable"
+            })
+            tianmou_idx += 1
+            realsense_idx += 1
+            frame_id += 1
+        else:
+            # 稳定期
+            skip_info_frame = skip_info.get(realsense_idx, {"skip_count": 0, "type": None})
+            skip_count = skip_info_frame["skip_count"]
+            skip_type = skip_info_frame["type"]
+            is_skipped = skip_count > 0
+            
+            # dt_ms 计算
+            dt_ms = realsense_ts_ms[realsense_idx] - realsense_ts_ms[realsense_idx-1] if realsense_idx > 0 else None
+            
+            if skip_type == "duplicate":
+                # dt=0: 重复帧，两个realsense帧对应同一个天眸帧
+                # 跳过这个realsense帧，天眸索引不增加
+                frames.append({
+                    "frame_id": frame_id,
+                    "tianmou_idx": tianmou_idx,
+                    "realsense_idx": realsense_idx,
+                    "dt_ms": round(dt_ms, 3) if dt_ms is not None else None,
+                    "skip": True,
+                    "skip_type": "duplicate",
+                    "skip_count": 1,
+                    "phase": "stable"
+                })
+                # 只增加realsense_idx，不增加tianmou_idx（这帧realsense被舍弃）
+                realsense_idx += 1
+                frame_id += 1
+            else:
+                # 正常帧或跳帧
+                # 跳帧时，天眸索引跳过对应的帧数
+                tianmou_offset = skip_count + 1 if is_skipped else 1
+                
+                frames.append({
+                    "frame_id": frame_id,
+                    "tianmou_idx": tianmou_idx,
+                    "realsense_idx": realsense_idx,
+                    "dt_ms": round(dt_ms, 3) if dt_ms is not None else None,
+                    "skip": is_skipped,
+                    "skip_type": skip_type,
+                    "skip_count": skip_count if is_skipped else 0,
+                    "phase": "stable"
+                })
+                
+                tianmou_idx += tianmou_offset
+                realsense_idx += 1
+                frame_id += 1
+    
+    return frames
+
+def check_color_depth_consistency(metadata_dir: str, temporal_timestamp_us: Optional[int]) -> None:
+    """
+    诊断函数：测试 Color 和 Depth 的 metadata 在过滤前和过滤后是否完全一致。
+    复用了现有的 read_realsense_timestamps 逻辑。
+    """
+    print("\n" + "="*50)
+    print("🔍 [诊断测试] Color vs Depth Metadata 一致性分析")
+    print("="*50)
+
+    # 1. 强制读取 Color 数据
+    print("\n--- 提取 Color 流 ---")
+    color_ts_ms, color_frames, color_stats = read_realsense_timestamps(
+        metadata_dir, temporal_timestamp_us, preferred_stream="color"
+    )
+
+    # 2. 强制读取 Depth 数据
+    print("\n--- 提取 Depth 流 ---")
+    depth_ts_ms, depth_frames, depth_stats = read_realsense_timestamps(
+        metadata_dir, temporal_timestamp_us, preferred_stream="depth"
+    )
+
+    # 3. 对比：过滤前的原始数量
+    print("\n>>> 【过滤前】原始数据量对比")
+    color_raw = color_stats.get('total_before_filter', 0)
+    depth_raw = depth_stats.get('total_before_filter', 0)
+    print(f"  Color 原始总数 : {color_raw}")
+    print(f"  Depth 原始总数 : {depth_raw}")
+    if color_raw == depth_raw and color_raw > 0:
+        print("  ✅ 结论: 过滤前数量完全一致。")
+    else:
+        print("  ❌ 结论: 过滤前数量不一致！请检查 D455 录制时是否丢失了某个流的帧。")
+
+    # 4. 对比：过滤后的数量与时间戳
+    print("\n>>> 【过滤后】 temporal 时间戳截断对比")
+    color_filtered = len(color_ts_ms)
+    depth_filtered = len(depth_ts_ms)
+    print(f"  Color 过滤后总数: {color_filtered}")
+    print(f"  Depth 过滤后总数: {depth_filtered}")
+
+    if color_filtered == depth_filtered and color_filtered > 0:
+        print("  ✅ 结论: 过滤后数量一致。开始逐帧比对硬件时间戳(Frame Timestamp)...")
+        
+        mismatch_count = 0
+        max_diff = 0.0
+        
+        for i in range(color_filtered):
+            diff = abs(color_ts_ms[i] - depth_ts_ms[i])
+            max_diff = max(max_diff, diff)
+            # 容忍 0.1ms 的极小浮点误差
+            if diff > 0.1:
+                mismatch_count += 1
+                if mismatch_count <= 5: # 只打印前几个错误避免刷屏
+                    print(f"     ⚠️ 第 {i} 帧不匹配: Color={color_ts_ms[i]:.3f}ms, Depth={depth_ts_ms[i]:.3f}ms, 差值={diff:.3f}ms")
+        
+        if mismatch_count == 0:
+            print(f"  ✅ 完美！所有 {color_filtered} 帧的 Frame Timestamp 严格匹配。最大偏差: {max_diff:.4f} ms")
+        else:
+            print(f"  ❌ 警告: 共有 {mismatch_count} 帧的硬件时间戳不一致！")
+    else:
+        print("  ❌ 结论: 过滤后数量不一致！这说明 Color 和 Depth 的到达时间 (Time Of Arrival) 有较大差异，导致被过滤掉的帧数不同。")
+    
+    print("="*50 + "\n")
+
+def process_session(tianmou_dir: str, bag_path: str, temporal_file: str,
+                   output_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    处理一对天眸和RealSense数据
+    
+    Args:
+        tianmou_dir: 天眸数据目录 (如 /projects/cxr_data/20260316_1749/)
+        bag_path: RealSense bag文件路径
+        temporal_file: 物理基准时间戳文件
+        output_path: 输出JSON文件路径
+    
+    Returns:
+        处理结果字典
+    """
+    global progress
+    
+    print(f"\n{'='*60}")
+    print(f"天眸与RealSense后处理对齐")
+    print(f"{'='*60}")
+    print(f"输入参数:")
+    print(f"  天眸目录: {tianmou_dir}")
+    print(f"  Bag文件: {bag_path}")
+    print(f"  时间戳文件: {temporal_file}")
+    print(f"  输出文件: {output_path or 'None'}")
+    print(f"{'='*60}")
+    
+    # ========== 阶段1: 读取物理基准时间戳 ==========
+    progress.start_stage("读取物理基准时间戳", "从temporal文件读取外部电路触发时间")
+    physical_ts_us = read_temporal_timestamp(temporal_file)
+    if not physical_ts_us:
+        print("Error: 无法读取物理时间戳")
+        progress.stages[-1]["status"] = "failed"
+        return {}
+    print(f"  物理基准时间戳: {physical_ts_us} us")
+    progress._finish_stage()
+    
+    # ========== 阶段2: 读取天眸帧时间戳 ==========
+    progress.start_stage("读取天眸帧时间戳", "使用TianmoucDataReader读取C_timestamp")
+    print(f"  天眸目录: {tianmou_dir}")
+    tianmou_timestamps = read_tianmou_timestamps_from_reader(tianmou_dir, camera_idx=0)
+    if not tianmou_timestamps:
+        print("Error: 无法读取天眸时间戳")
+        progress.stages[-1]["status"] = "failed"
+        return {}
+    print(f"  天眸总帧数: {len(tianmou_timestamps)}")
+    print(f"  天眸首帧时间戳: {tianmou_timestamps[0]} us")
+    print(f"  天眸末帧时间戳: {tianmou_timestamps[-1]} us")
+    progress._finish_stage()
+    
+    # ========== 阶段3: 提取RealSense时间戳 ==========
+    progress.start_stage("提取RealSense时间戳", "使用rs-convert从bag文件提取metadata")
+    print(f"  Bag文件: {bag_path}")
+    metadata_dir = extract_realsense_metadata(bag_path)
+    if not metadata_dir:
+        print("Error: 无法提取RealSense metadata")
+        progress.stages[-1]["status"] = "failed"
+        return {}
+
+    # 👇👇👇 插入这行诊断代码 👇👇👇
+    check_color_depth_consistency(metadata_dir, physical_ts_us)
+    # 👆👆👆 插入这行诊断代码 👆👆👆
+    realsense_ts_ms, realsense_frame_nums, rs_meta_stats = read_realsense_timestamps(
+        metadata_dir, physical_ts_us, preferred_stream="auto"
+    )
+    if not realsense_ts_ms:
+        print("Error: 无法读取RealSense时间戳")
+        progress.stages[-1]["status"] = "failed"
+        return {}
+    print(f"  RealSense总帧数: {len(realsense_ts_ms)}")
+    print(f"  RealSense首帧时间戳: {realsense_ts_ms[0]} ms")
+    print(f"  RealSense末帧时间戳: {realsense_ts_ms[-1]} ms")
+    print(f"  使用的流: {rs_meta_stats.get('used_stream', 'unknown')}")
+    print(f"  过滤前metadata数量: {rs_meta_stats.get('total_before_filter', 'N/A')}")
+    progress._finish_stage()
+    
+    # ========== 阶段4: 找到锚定点 ==========
+    progress.start_stage("锚定点匹配", "寻找天眸帧与RealSense帧的起始对齐点")
+    anchor_n = find_anchor_tianmou_frame(tianmou_timestamps, physical_ts_us)
+    if anchor_n is None:
+        print("Error: 无法找到锚定点")
+        progress.stages[-1]["status"] = "failed"
+        return {}
+    print(f"  锚定点: 天眸第{anchor_n}帧 <-> RealSense第0帧")
+    progress._finish_stage()
+    
+    # ========== 阶段5: 计算不稳定期 ==========
+    progress.start_stage("计算不稳定期", "确定RealSense不稳定期的结束位置")
+    x = min(UNSTABLE_FRAME_COUNT, len(realsense_ts_ms) - 1)
+    unstable_end_y = find_unstable_end_y(tianmou_timestamps, anchor_n, realsense_ts_ms, x)
+    
+    print(f"\n  不稳定期分析:")
+    print(f"    RealSense不稳定期帧数: {x+1}")
+    print(f"    对应的天眸帧偏移: y={unstable_end_y}")
+    print(f"    稳定期开始: 天眸第{anchor_n + unstable_end_y}帧, RealSense第{x}帧")
+    progress._finish_stage()
+    
+    # ========== 阶段6: 检测稳定期跳帧 ==========
+    progress.start_stage("检测稳定期跳帧", "分析RealSense帧间隔，检测跳帧")
+    skipped_frames = detect_skipped_frames(realsense_ts_ms, start_idx=x)
+    print(f"\n  稳定期跳帧检测结果:")
+    print(f"    检测到跳帧数: {len(skipped_frames)}")
+    if skipped_frames:
+        for sf in skipped_frames[:5]:  # 只显示前5个
+            print(f"      第{sf['frame_idx']}帧: dt={sf['dt']:.2f}ms, 跳{sf['skip_count']}帧")
+        if len(skipped_frames) > 5:
+            print(f"      ... 还有 {len(skipped_frames)-5} 个")
+    progress._finish_stage()
+    
+    # ========== 阶段7: 构建帧映射 ==========
+    progress.start_stage("构建帧映射", "生成对齐的帧索引文件")
+    print(f"  生成 {len(realsense_ts_ms)} 个帧的映射...")
+    frames = build_frame_mapping(
+        anchor_n, 
+        unstable_end_y, 
+        x,
+        tianmou_timestamps, 
+        realsense_ts_ms,
+        skipped_frames
+    )
+    print(f"  ✓ 帧映射构建完成")
+    progress._finish_stage()
+    
+    # ========== 阶段8: 保存结果 ==========
+    progress.start_stage("保存结果", "将结果写入JSON文件")
+    
+    # 构建结果
+    result = {
+        "input": {
+            "tianmou_dir": tianmou_dir,
+            "bag_path": bag_path,
+            "temporal_file": temporal_file,
+            "timestamp_source": "TianmoucDataReader (C_timestamp[0] * 10)"
+        },
+        "anchor": {
+            "tianmou_frame_index": anchor_n,
+            "realsense_frame_index": 0,
+            "physical_timestamp_us": physical_ts_us
+        },
+        "unstable_period": {
+            "realsense_stable_frame": x,
+            "tianmou_frame_at_stable_start": anchor_n + unstable_end_y,
+            "y_offset": unstable_end_y
+        },
+        "statistics": {
+            "total_tianmou_frames": len(tianmou_timestamps),
+            "total_realsense_frames": len(realsense_ts_ms),
+            "skipped_frames_count": len(skipped_frames),
+            "matched_frames_count": len(frames),
+            "metadata": {
+                "color_metadata_count": rs_meta_stats.get("color_count", 0),
+                "depth_metadata_count": rs_meta_stats.get("depth_count", 0),
+                "used_stream": rs_meta_stats.get("used_stream", "unknown"),
+                "total_before_filter": rs_meta_stats.get("total_before_filter", 0)
+            }
+        },
+        "realsense_timestamps_ms": realsense_ts_ms,  # Frame Timestamp (ms) 用于图像匹配
+        "frames": frames
+    }
+    
+    if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, 'w') as f:
+            json.dump(result, f, indent=2, ensure_ascii=False)
+        print(f"  结果已保存到: {output_path}")
+    progress._finish_stage()
+    
+    # 打印最终统计
+    progress.finish()
+    
+    print(f"\n{'='*60}")
+    print(f"处理完成!")
+    print(f"  天眸帧: {len(tianmou_timestamps)}")
+    print(f"  RealSense帧: {len(realsense_ts_ms)}")
+    print(f"  锚定点: 天眸第{anchor_n}帧")
+    print(f"  稳定期跳帧: {len(skipped_frames)}帧")
+    print(f"{'='*60}")
+    
+    return result
+
+
+def find_matching_files(data_dir: str, temporal_file: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    根据temporal文件找到对应的天眸目录和bag文件
+    
+    Args:
+        data_dir: 数据根目录
+        temporal_file: temporal文件路径
+    
+    Returns:
+        (天眸目录, bag文件路径)
+    """
+    # 从temporal文件名提取时间
+    # 格式: tianmou_timestamp_YYYYMMDD_HHMMSS.csv
+    basename = os.path.basename(temporal_file)
+    match = re.search(r'tianmou_timestamp_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})\.csv', basename)
+    if not match:
+        return None, None
+    
+    date_str = f"{match.group(1)}{match.group(2)}{match.group(3)}_{match.group(4)}{match.group(5)}"
+    
+    # 查找天眸目录
+    tianmou_dir = os.path.join(data_dir, date_str)
+    if not os.path.exists(tianmou_dir):
+        print(f"Warning: 天眸目录不存在: {tianmou_dir}")
+        return None, None
+    
+    # 查找bag文件
+    # bag文件在 2026-MM-DD 格式的目录中
+    date_ymd = f"2026-{match.group(2)}-{match.group(3)}"
+    bag_dir = os.path.join(data_dir, date_ymd)
+    
+    if not os.path.exists(bag_dir):
+        print(f"Warning: bag目录不存在: {bag_dir}")
+        return tianmou_dir, None
+    
+    # 查找时间最接近的bag文件
+    target_hour = int(match.group(4))
+    target_min = int(match.group(5))
+    target_time = target_hour * 60 + target_min
+    
+    bag_files = glob.glob(f"{bag_dir}/*.bag")
+    best_bag = None
+    best_diff = float('inf')
+    
+    for bf in bag_files:
+        bf_name = os.path.basename(bf)
+        # 格式: HH-MM-SS.bag
+        bag_match = re.match(r'(\d{1,2})-(\d{2})-(\d{2})\.bag', bf_name)
+        if bag_match:
+            bh = int(bag_match.group(1))
+            bm = int(bag_match.group(2))
+            bag_time = bh * 60 + bm
+            diff = abs(bag_time - target_time)
+            if diff < best_diff:
+                best_diff = diff
+                best_bag = bf
+    
+    return tianmou_dir, best_bag
+
+
+def main():
+    parser = argparse.ArgumentParser(description="天眸与RealSense后处理对齐")
+    parser.add_argument("--tianmou-dir", help="天眸数据目录 (如 /projects/cxr_data/20260316_1749/)")
+    parser.add_argument("--bag", help="RealSense bag文件")
+    parser.add_argument("--temporal", help="物理基准时间戳文件")
+    parser.add_argument("--auto", action="store_true", help="自动匹配文件")
+    parser.add_argument("--data-dir", default=DEFAULT_CXR_DATA_DIR, help="数据根目录")
+    parser.add_argument("--output", "-o", help="输出JSON文件路径")
+    
+    args = parser.parse_args()
+    
+    if args.auto:
+        # 自动模式：根据temporal文件找到对应的数据
+        if not args.temporal:
+            # 找最新的temporal文件
+            temporal_files = sorted(glob.glob(f"{DEFAULT_TEMPORAL_DIR}/tianmou_timestamp_*.csv"))
+            if not temporal_files:
+                print("Error: 未找到temporal文件")
+                return
+            args.temporal = temporal_files[-1]
+            print(f"使用最新的temporal文件: {args.temporal}")
+        
+        tianmou_dir, bag_path = find_matching_files(args.data_dir, args.temporal)
+        if not tianmou_dir:
+            print("Error: 无法找到对应的天眸目录")
+            return
+        if not bag_path:
+            print("Warning: 未找到对应的bag文件，将跳过RealSense处理")
+    else:
+        if not all([args.tianmou_dir, args.bag, args.temporal]):
+            parser.error("需要提供 --tianmou-dir, --bag, --temporal 或使用 --auto")
+            return
+        tianmou_dir = args.tianmou_dir
+        bag_path = args.bag
+        args.temporal = args.temporal
+    
+    result = process_session(tianmou_dir, bag_path, args.temporal, args.output)
+    
+    if result:
+        print("\n处理完成!")
+    else:
+        print("\n处理失败!")
+
+
+if __name__ == "__main__":
+    main()

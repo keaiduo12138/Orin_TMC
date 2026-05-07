@@ -1,0 +1,7 @@
+build
+.vscode
+.clangd
+.cache
+resource
+cxr_files
+python_utils

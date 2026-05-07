@@ -1,0 +1,29 @@
+{
+  "score_epipolar": 0.0,
+  "score_e_rank": 100.0,
+  "score_physical": 0.0,
+  "score_total": 33.333333333333336,
+  "verdict": "\u2717 \u4e0d\u5408\u683c",
+  "physical_layout": {
+    "baseline_mm": 611.3171869442132,
+    "baseline_cm": 61.131718694421316,
+    "T_raw": [
+      -522.6025170235944,
+      221.76590187464942,
+      226.7491940883433
+    ],
+    "expected_T_y_mm": 100,
+    "actual_T_y_mm": 221.76590187464942,
+    "T_y_deviation_pct": 121.76590187464942,
+    "T_x_mm": -522.6025170235944,
+    "T_z_mm": 226.7491940883433,
+    "T_y_verdict": "\u504f\u5927"
+  },
+  "per_frame_results": [
+    {
+      "frame_idx": 1,
+      "epipolar_mean_px": 258.6463784991978,
+      "epipolar_max_px": 383.31598003756386,
+      "epipolar_min_px": 9.204223698718478,
+      "E_rank_ratio": 9.067724842733274e-18,
+      "E_rank_ok": 

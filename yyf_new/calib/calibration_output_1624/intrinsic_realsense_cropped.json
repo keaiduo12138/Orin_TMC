@@ -1,0 +1,1355 @@
+{
+  "resolution": {
+    "width": 640,
+    "height": 320
+  },
+  "K": [
+    [
+      385.8800518938313,
+      0.0,
+      329.3323298300865
+    ],
+    [
+      0.0,
+      385.6813030560857,
+      162.21271852833553
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "dist": [
+    -0.05509192970864683,
+    0.06875930135008106,
+    -0.0009981684935484437,
+    -0.001065288979524298,
+    -0.03887213469209272
+  ],
+  "mean_reproj_error_px": 0.8542365058973079,
+  "per_frame_errors": [
+    {
+      "dataset": 0,
+      "frame_idx": 0,
+      "error_px": 0.8048956861990318
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 5,
+      "error_px": 1.085420878476235
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 10,
+      "error_px": 1.117965585233591
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 15,
+      "error_px": 1.2506354189362308
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 20,
+      "error_px": 1.2356502749245044
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 25,
+      "error_px": 0.6319719953722457
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 30,
+      "error_px": 0.5384524794992429
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 35,
+      "error_px": 0.578347252097045
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 40,
+      "error_px": 0.9201113582662069
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 45,
+      "error_px": 1.1445062446120746
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 50,
+      "error_px": 1.0730226392119386
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 55,
+      "error_px": 1.015626623910055
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 60,
+      "error_px": 0.5098029002906649
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 65,
+      "error_px": 0.4280379287975111
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 70,
+      "error_px": 0.4167345374570928
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 75,
+      "error_px": 0.55158583774503
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 80,
+      "error_px": 0.7263509528676686
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 85,
+      "error_px": 0.6463565553746267
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 90,
+      "error_px": 0.583267411755265
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 95,
+      "error_px": 0.5381488285160329
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 100,
+      "error_px": 0.8094828553595018
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 105,
+      "error_px": 0.9575777116400216
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 110,
+      "error_px": 0.6204209012447305
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 115,
+      "error_px": 0.5469553895281629
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 120,
+      "error_px": 0.5214073800389847
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 125,
+      "error_px": 0.5946741305632096
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 130,
+      "error_px": 0.7140461585882757
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 135,
+      "error_px": 1.1057980186525271
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 140,
+      "error_px": 0.8450044389560326
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 145,
+      "error_px": 0.596220249514004
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 150,
+      "error_px": 0.5459385653587169
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 155,
+      "error_px": 0.6032672476783753
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 160,
+      "error_px": 0.8001167263022134
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 165,
+      "error_px": 0.6631122202573202
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 170,
+      "error_px": 0.536484771133434
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 175,
+      "error_px": 0.532568098701479
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 180,
+      "error_px": 0.6593790616414887
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 185,
+      "error_px": 0.9809247286202688
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 190,
+      "error_px": 0.8993484689825472
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 195,
+      "error_px": 0.7062713832068895
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 200,
+      "error_px": 0.7286939899195486
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 205,
+      "error_px": 0.8714545364721359
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 210,
+      "error_px": 1.0234425485521477
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 215,
+      "error_px": 1.7289431174155503
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 220,
+      "error_px": 1.0326234359396134
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 225,
+      "error_px": 0.8864288850147694
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 230,
+      "error_px": 0.7075973014116101
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 235,
+      "error_px": 1.1252810276008378
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 240,
+      "error_px": 2.311273567669695
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 245,
+      "error_px": 0.7600816247889681
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 250,
+      "error_px": 0.7971292613746661
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 255,
+      "error_px": 0.7334675178156441
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 260,
+      "error_px": 0.7122150072940899
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 265,
+      "error_px": 0.9333354276337535
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 270,
+      "error_px": 1.2522511813454136
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 285,
+      "error_px": 1.0435501196512926
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 290,
+      "error_px": 0.5943314758689443
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 295,
+      "error_px": 0.9015917431462561
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 300,
+      "error_px": 0.5565404642385606
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 305,
+      "error_px": 0.8448999439809909
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 327,
+      "error_px": 2.5274047870908207
+    }
+  ],
+  "valid_frame_indices": [
+    0,
+    5,
+    10,
+    15,
+    20,
+    25,
+    30,
+    35,
+    40,
+    45,
+    50,
+    55,
+    60,
+    65,
+    70,
+    75,
+    80,
+    85,
+    90,
+    95,
+    100,
+    105,
+    110,
+    115,
+    120,
+    125,
+    130,
+    135,
+    140,
+    145,
+    150,
+    155,
+    160,
+    165,
+    170,
+    175,
+    180,
+    185,
+    190,
+    195,
+    200,
+    205,
+    210,
+    215,
+    220,
+    225,
+    230,
+    235,
+    240,
+    245,
+    250,
+    255,
+    260,
+    265,
+    270,
+    285,
+    290,
+    295,
+    300,
+    305,
+    327
+  ],
+  "n_frames": 61,
+  "n_frames_initial": 244,
+  "n_frames_removed": 183,
+  "removed_frames": [
+    {
+      "dataset": 0,
+      "frame_idx": 397,
+      "error": 39.6134755379332
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 402,
+      "error": 38.89703591663553
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 529,
+      "error": 38.775874565531915
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 524,
+      "error": 38.06764985729375
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 499,
+      "error": 37.98792389288281
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 504,
+      "error": 37.9871284602933
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 407,
+      "error": 37.92065588041684
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 417,
+      "error": 37.756688277674954
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1058,
+      "error": 37.60279872113327
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 579,
+      "error": 37.432778423549664
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 484,
+      "error": 37.40467048059771
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 433,
+      "error": 37.316605070692944
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 534,
+      "error": 37.22685418376767
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 989,
+      "error": 37.15946782077155
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1030,
+      "error": 37.14407350399771
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 443,
+      "error": 37.09023938200511
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 489,
+      "error": 37.06019020322006
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 509,
+      "error": 36.930085602293055
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1009,
+      "error": 36.896281800205365
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 539,
+      "error": 36.847985936988806
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1073,
+      "error": 36.845075542416794
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 594,
+      "error": 36.84390477686397
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1004,
+      "error": 36.79287266851212
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1063,
+      "error": 36.73580604190118
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 470,
+      "error": 36.72131581628483
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 564,
+      "error": 36.52459538015626
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1120,
+      "error": 36.451345462110375
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1095,
+      "error": 36.283120034973436
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 544,
+      "error": 36.282673111012606
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 514,
+      "error": 36.280653884425064
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 584,
+      "error": 36.270700238484686
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 494,
+      "error": 36.1879627871716
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 479,
+      "error": 36.14042963336819
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 978,
+      "error": 36.023606514277645
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 983,
+      "error": 35.945640816390835
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1115,
+      "error": 35.92485897293504
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 412,
+      "error": 35.90411637177693
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1078,
+      "error": 35.83967740157937
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 559,
+      "error": 35.7788957440536
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 994,
+      "error": 35.690945940175865
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1035,
+      "error": 35.664968303476165
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 999,
+      "error": 35.622405821912224
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 448,
+      "error": 35.54006039502839
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 377,
+      "error": 35.46578565113561
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1105,
+      "error": 35.14812686191328
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1014,
+      "error": 35.03370281809317
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 589,
+      "error": 34.992190685704436
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1130,
+      "error": 34.9774874292858
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 428,
+      "error": 34.93817855965997
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 453,
+      "error": 34.929783769783256
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 519,
+      "error": 34.83107867989787
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 438,
+      "error": 34.678442635360966
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1090,
+      "error": 34.65475055773668
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 574,
+      "error": 34.648776367773074
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1135,
+      "error": 34.576997506907155
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 549,
+      "error": 34.55443843268006
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1040,
+      "error": 34.52939830818218
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 554,
+      "error": 34.48018139702078
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1125,
+      "error": 34.45309613630816
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 372,
+      "error": 34.4073428194199
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1110,
+      "error": 34.340525866173934
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1068,
+      "error": 34.331176724506584
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 599,
+      "error": 34.26675962618943
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1085,
+      "error": 33.95105665168634
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 973,
+      "error": 33.809433593072356
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1100,
+      "error": 33.788461752793246
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 459,
+      "error": 33.33232473766195
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 968,
+      "error": 33.30178045126312
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 604,
+      "error": 33.25632953056964
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 464,
+      "error": 32.8640545181412
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 963,
+      "error": 32.69746887411346
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 958,
+      "error": 32.05407002382817
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 367,
+      "error": 31.98628278741199
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1155,
+      "error": 31.5029777001873
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 942,
+      "error": 31.467074677127233
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1150,
+      "error": 31.274763533328144
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1160,
+      "error": 31.21267035129795
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1192,
+      "error": 31.061973190040113
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1187,
+      "error": 30.97472296399356
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1181,
+      "error": 30.820001502637602
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 392,
+      "error": 30.768295416074213
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1171,
+      "error": 30.4429735836614
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 654,
+      "error": 30.007598886473488
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 953,
+      "error": 29.89851714728189
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1045,
+      "error": 29.876310733488516
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1292,
+      "error": 29.770656884877216
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 864,
+      "error": 29.664557282191804
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 569,
+      "error": 29.635265189582995
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 362,
+      "error": 29.218160409731333
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 698,
+      "error": 29.086878128236282
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1176,
+      "error": 29.005773374986468
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 624,
+      "error": 28.730908884947777
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 733,
+      "error": 28.586263757740998
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1145,
+      "error": 28.56525136369237
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 382,
+      "error": 28.349644671165034
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 610,
+      "error": 28.299560311942763
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1165,
+      "error": 28.238379254318772
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 926,
+      "error": 28.2047017739762
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 728,
+      "error": 28.117347336820185
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 722,
+      "error": 27.972843011863045
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 764,
+      "error": 27.827612667989854
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 617,
+      "error": 27.613078616689766
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 828,
+      "error": 27.493239241277514
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 703,
+      "error": 27.419056232276958
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 808,
+      "error": 27.326861970813475
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 738,
+      "error": 27.296195215998274
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1140,
+      "error": 26.979521544930137
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 948,
+      "error": 26.978502651543018
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 642,
+      "error": 26.92428190755112
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 647,
+      "error": 26.67971250746607
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 833,
+      "error": 26.6446796552352
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 781,
+      "error": 26.31707750177235
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 682,
+      "error": 26.281546496677333
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 629,
+      "error": 26.038269464251226
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 708,
+      "error": 25.94761001714846
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 791,
+      "error": 25.87855501321753
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 934,
+      "error": 25.645859483554222
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 796,
+      "error": 25.389325104811675
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 759,
+      "error": 25.06074152989303
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1393,
+      "error": 24.976335219141124
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 823,
+      "error": 24.949868831001027
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 776,
+      "error": 24.923548628480493
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 770,
+      "error": 24.92138317774406
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 859,
+      "error": 24.75853469894779
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 667,
+      "error": 24.744957645447222
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 387,
+      "error": 24.45922871063752
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 692,
+      "error": 24.290116294029907
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 687,
+      "error": 24.086405955985903
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 673,
+      "error": 23.981768168322102
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 317,
+      "error": 23.97234871179241
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 636,
+      "error": 23.48859009378808
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 342,
+      "error": 23.333883467338666
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1198,
+      "error": 22.996504613498303
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 337,
+      "error": 22.856657982155216
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 854,
+      "error": 22.478488705736453
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 786,
+      "error": 22.355398323988748
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1271,
+      "error": 22.320472295683633
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 661,
+      "error": 22.29531411958949
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 838,
+      "error": 21.871816339527527
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 754,
+      "error": 21.738310024555663
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 920,
+      "error": 21.53731705625514
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 347,
+      "error": 21.216397032622325
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 907,
+      "error": 20.564961610176745
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 896,
+      "error": 20.51614272452183
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 913,
+      "error": 20.271096050919255
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 332,
+      "error": 20.10220603615044
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 275,
+      "error": 20.070938986656355
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 844,
+      "error": 19.93350949892083
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1239,
+      "error": 19.70558141634564
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 875,
+      "error": 19.65754224580064
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 743,
+      "error": 19.564363499067433
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 802,
+      "error": 19.103850546241098
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 357,
+      "error": 19.04224492199452
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1208,
+      "error": 18.769273031884413
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 891,
+      "error": 18.47703255085774
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 818,
+      "error": 18.23351430330348
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1265,
+      "error": 18.165048807928905
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 880,
+      "error": 17.95257049227293
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 901,
+      "error": 17.92721337659994
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 849,
+      "error": 17.814763778365517
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 869,
+      "error": 17.77381609118998
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1203,
+      "error": 17.545126418456057
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 885,
+      "error": 17.340272131239495
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1232,
+      "error": 16.832361746204167
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1369,
+      "error": 16.686607375921447
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1260,
+      "error": 16.434330172369325
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1255,
+      "error": 16.43375952581121
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 352,
+      "error": 16.413654094106207
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1250,
+      "error": 15.229061645126878
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1213,
+      "error": 15.05528041878985
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 749,
+      "error": 14.65711993270474
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1339,
+      "error": 14.49739869577911
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 310,
+      "error": 13.57717136016317
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1344,
+      "error": 12.220111238553937
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1334,
+      "error": 11.958925884370283
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1349,
+      "error": 11.7205833758063
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1437,
+      "error": 11.47080991347544
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1355,
+      "error": 11.447416365547392
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1443,
+      "error": 10.230837859177472
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1431,
+      "error": 9.734756851075499
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 1426,
+      "error": 9.676168323209914
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 280,
+      "error": 9.20723708575857
+    },
+    {
+      "dataset": 0,
+      "frame_idx": 322,
+      "error": 8.635800639702827
+    }
+  ],
+  "n_datasets": 1,
+  "data_dirs": [
+    "/projects/calib_data/output_0327_1624/color_cropped/"
+  ],
+  "sample_steps": [
+    5
+  ],
+  "init_method": "crop_adjusted_factory",
+  "crop_top_px": 80,
+  "factory_K_480": [
+    [
+      385.019,
+      0.0,
+      329.543
+    ],
+    [
+      0.0,
+      384.118,
+      241.941
+    ],
+    [
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "iterations": 1,
+  "comparison": {
+    "diff_fx_pct": 0.2236388058332971,
+    "diff_fy_pct": 0.4069851077235941,
+    "diff_cx_px": 0.21067016991349874,
+    "diff_cy_px": 0.27171852833552634,
+    "expected_cy": 161.941
+  }
+}

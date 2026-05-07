@@ -1,0 +1,18 @@
+import pyrealsense2 as rs
+import numpy as np
+
+# 假设你已经启动了 pipeline
+pipeline = rs.pipeline()
+profile = pipeline.start()
+
+# 获取彩色流的内参
+color_profile = profile.get_stream(rs.stream.color)
+intrinsics = color_profile.as_video_stream_profile().get_intrinsics()
+
+# 转换为类似天眸 USB_MODULE_MAT 的矩阵格式
+K_rs = np.array([
+    [intrinsics.fx, 0,             intrinsics.ppx],
+    [0,             intrinsics.fy, intrinsics.ppy],
+    [0,             0,             1]
+])
+dist_rs = np.array(intrinsics.coeffs) # 畸变系数 [k1, k2, p1, p2, k3]

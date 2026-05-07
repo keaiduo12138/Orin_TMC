@@ -7,26 +7,13 @@
 
 RealSense::RealSense(const RunMode run_mode, std::string file_dir, std::string file_without_suffix)
 : run_mode(run_mode) {
-    // 展开路径
-    file_dir = expand_user(file_dir);
-    file_without_suffix = expand_user(file_without_suffix);
-    // 设备检测
-    rs2::device_list devices = this->ctx.query_devices();
-    if (devices.size() < 1) {
-        printf("RealSense 未连接, 退出\n");
-        return;
-    } else if (devices.size() > 1) {
-        printf("有多个 RealSense, 退出\n");
-        return;
-    }
-
     // 录制播放模式设置
     if (this->run_mode == RunMode::RECORD) {
-        std::string dir_path = file_dir + today_date() + '/';
+        std::string dir_path = expand_user(file_dir) + today_date() + '/';
         std::filesystem::create_directories(dir_path);
         this->file_to_save = dir_path + today_time() + ".bag";
     } else if (this->run_mode == RunMode::PLAY) {
-        this->file_to_play = file_without_suffix + ".bag";
+        this->file_to_play = expand_user(file_without_suffix) + ".bag";
     } else {
         printf("Run Mode 非法, 程序退出\n");
     }
@@ -163,8 +150,8 @@ int RealSense::open() {
         }
 
         cfg.enable_record_to_file(file_to_save);
-        cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_Z16, 60);
-        // cfg.enable_stream(RS2_STREAM_COLOR, 848, 480, RS2_FORMAT_BGR8, 60);
+        cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16, 60);
+        cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8, 60);
 
         pipe = rs2::pipeline(this->ctx);
         pipe.start(cfg);
@@ -184,8 +171,8 @@ int RealSense::open() {
         }
 
         cfg.enable_device_from_file(file_to_play);
-        cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_Z16, 30);
-        // cfg.enable_stream(RS2_STREAM_COLOR, 848, 480, RS2_FORMAT_BGR8, 60);
+        cfg.enable_stream(RS2_STREAM_DEPTH, 640, 480, RS2_FORMAT_Z16, 60);
+        cfg.enable_stream(RS2_STREAM_COLOR, 640, 480, RS2_FORMAT_BGR8, 60);
 
         pipe = rs2::pipeline(this->ctx);
         try {
