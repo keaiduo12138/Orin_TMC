@@ -73,19 +73,13 @@ class TianmouAutoApp(tk.Tk):
         self.ts_save_dir_var = tk.StringVar(value="/projects/cxr_data/temporal_files")
         self.gpio_script_var = tk.StringVar(value=os.path.join(repo_root, "yyf", "power_1v8_ctrl.py"))
 
-        self.save_path_var = tk.StringVar()
+        self.save_path_var = tk.StringVar(value="")
         self.start_delay_var = tk.StringVar(value="1.0")
-
-        self._reset_save_path()
 
         self.ctrl = UdpCameraController("127.0.0.1", 8889, self._log)
         self._build_ui()
         self._update_status("空闲")
         self.after(100, self._drain_log_queue)
-
-    def _reset_save_path(self):
-        # 默认置空，强制拍摄者手动输入路径
-        self.save_path_var.set("")
 
     def _build_ui(self):
         root = ttk.Frame(self, padding=20)
@@ -98,7 +92,7 @@ class TianmouAutoApp(tk.Tk):
         path_frame.pack(fill=tk.X, pady=(0, 10))
         ttk.Label(path_frame, text="保存路径:").pack(side=tk.LEFT)
         ttk.Entry(path_frame, textvariable=self.save_path_var, width=35).pack(side=tk.LEFT, padx=8, fill=tk.X, expand=True)
-        ttk.Button(path_frame, text="刷新", command=self._on_refresh_path, width=6).pack(side=tk.LEFT)
+        ttk.Button(path_frame, text="清空", command=self._on_refresh_path, width=6).pack(side=tk.LEFT)
 
         btn_frame = ttk.Frame(root)
         btn_frame.pack(pady=(0, 10))
@@ -121,9 +115,8 @@ class TianmouAutoApp(tk.Tk):
         self.log_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
     def _on_refresh_path(self):
-        ts = datetime.now().strftime("%Y%m%d_%H%M")
-        self.save_path_var.set(os.path.join("/projects", ts))
-        self._log("[SYS] 已刷新保存路径")
+        self.save_path_var.set("")
+        self._log("[SYS] 已清空保存路径")
 
     def _log(self, message: str, color: str = None):
         self.log_queue.put((message, color))
@@ -304,10 +297,11 @@ class TianmouAutoApp(tk.Tk):
 
     def _start_workflow(self):
         try:
-            user_base_dir = self.save_path_var.get().strip()
-            if not user_base_dir:
+            user_suffix = self.save_path_var.get().strip()
+            if not user_suffix:
                 self.after(0, lambda: messagebox.showwarning("警告", "请先输入保存路径"))
                 return
+            user_base_dir = "/projects/" + user_suffix
 
             main_exec = self.main_exec_var.get().strip()
             main_cwd = self.main_cwd_var.get().strip()
