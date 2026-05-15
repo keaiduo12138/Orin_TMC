@@ -5,3 +5,11 @@ build
 resource
 cxr_files
 python_utils
+
+# Output and temporary files
+output_old/
+output_*.json
+yyf/market_fast_1/
+*.bag
+*.bag.db3
+__pycache__/

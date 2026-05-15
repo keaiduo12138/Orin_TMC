@@ -408,22 +408,27 @@ sudo mkdir -p /projects/calib_data/output_0415_2  && sudo chmod 777 /projects/ca
 python yyf/calib/depth_0408.py \
     --base /projects/calib_data/output_0414_1744 \
     --index output_0414_1744.json
+python calib/depth_0408.py \
+    --base /projects/calib_data/output_market_fast_1 \
+    --index output_market_fast_new.json
 
                            
         python3 post_process.py \
-  --tianmou-dir /projects/cxr_data/19700101_0847\
-  --bag /projects/cxr_data/1970-1-1/8-48-1.bag\
-  --temporal /projects/cxr_data/temporal_files/tianmou_timestamp_19700101_084848.csv\
-  -o output_1970_0847.json
+  --tianmou-dir /projects/cxr_data/20260507_1954\
+  --bag /projects/cxr_data/2026-5-7/19-54-48.bag\
+  --temporal /projects/cxr_data/temporal_files/tianmou_timestamp_20260507_195523.csv\
+  -o output_0507_1954.json
 
-   sudo mkdir -p /projects/calib_data/output_1970_0847  && sudo chmod 777 /projects/calib_data/output_1970_0847
+   sudo mkdir -p /projects/calib_data/output_0507_1954  && sudo chmod 777 /projects/calib_data/output_0507_1954
   python3 export_aligned_frames.py \
-  -i output_1970_0847.json \
-  -t /projects/cxr_data/19700101_0847 \
-  -b /projects/cxr_data/1970-1-1/8-48-1.bag \
-  -o /projects/calib_data/output_1970_0847 \
+  -i output_0507_1954.json \
+  -t /projects/cxr_data/20260507_1954 \
+  -b /projects/cxr_data/2026-5-7/19-54-48.bag \
+  -o /projects/calib_data/output_0507_1954 \
   --use-raw-depth
 
 
 
-      python3 check_bag_metadata.py /projects/cxr_data/1970-1-1/10-12-5.bag
+      python3 check_bag_metadata.py /projects/market_fast_1/realsense2026-5-13/18-48-29.bag
+
+python3 post_process.py --root /projects/market_fast_new -o output_market_fast_new.json

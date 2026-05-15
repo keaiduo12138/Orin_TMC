@@ -1,19 +1,9 @@
-# 0: undefined
-# 1: record
-# 2: play
-run_mode: 1
-file_dir: "/projects/cxr_data/"
-file_without_suffix: "/projects/cxr_data/2026-1-29/15-55-25"
-
-enable_realsense: 1
-enable_prophesee: 0
 enable_davis: 0
-
-# 1.8V 外部电源控制
-# 0: 禁用
-# 1: 启用
 enable_power_1v8: 0
-# GPIO 编号 (sysfs GPIO number)
-# Pin 13 -> gpio456
-# Pin 15 -> gpio433
+enable_prophesee: 0
+enable_realsense: 1
+file_dir: /projects/CBICR_test7/realsense
+file_without_suffix: /projects/cxr_data/2026-1-29/15-55-25
+last_save_dir: /projects/CBICR_test7
 power_1v8_gpio: 433
+run_mode: 1

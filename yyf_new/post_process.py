@@ -643,6 +643,45 @@ def process_session(tianmou_dir: str, bag_path: str, temporal_file: str,
     return result
 
 
+def find_data_in_root(root_dir: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+    """
+    从根目录自动探测三路数据路径。
+
+    Returns:
+        (tianmou_dir, bag_path, temporal_file)
+    """
+    tianmou_dir = os.path.join(root_dir, "tianmou")
+    if not os.path.isdir(tianmou_dir):
+        print(f"Error: 天眸目录不存在: {tianmou_dir}")
+        return None, None, None
+
+    bag_files = glob.glob(os.path.join(root_dir, "**/*.bag"), recursive=True)
+    if not bag_files:
+        print(f"Error: 未找到 bag 文件 in {root_dir}")
+        return None, None, None
+    if len(bag_files) > 1:
+        print(f"Warning: 发现多个 bag 文件，取第一个: {bag_files[0]}")
+    bag_path = bag_files[0]
+
+    temporal_files = glob.glob(os.path.join(root_dir, "temporal_files/tianmou_timestamp_*.csv"))
+    if not temporal_files:
+        temporal_files = glob.glob(os.path.join(root_dir, "**/tianmou_timestamp_*.csv"), recursive=True)
+    if not temporal_files:
+        print(f"Error: 未找到 temporal 时间戳文件 in {root_dir}")
+        return None, None, None
+    if len(temporal_files) > 1:
+        print(f"Warning: 发现多个 temporal 文件，取第一个: {temporal_files[0]}")
+    temporal_file = temporal_files[0]
+
+    print(f"自动探测结果:")
+    print(f"  根目录: {root_dir}")
+    print(f"  天眸:   {tianmou_dir}")
+    print(f"  Bag:    {bag_path}")
+    print(f"  Temporal: {temporal_file}")
+
+    return tianmou_dir, bag_path, temporal_file
+
+
 def find_matching_files(data_dir: str, temporal_file: str) -> Tuple[Optional[str], Optional[str]]:
     """根据temporal文件找到对应的天眸目录和bag文件"""
     basename = os.path.basename(temporal_file)
@@ -689,16 +728,24 @@ def find_matching_files(data_dir: str, temporal_file: str) -> Tuple[Optional[str
 
 def main():
     parser = argparse.ArgumentParser(description="天眸与RealSense后处理对齐 (三路对齐版)")
-    parser.add_argument("--tianmou-dir", help="天眸数据目录 (如 /projects/cxr_data/20260316_1749/)")
+    parser.add_argument("--root", help="数据根目录（自动探测天眸、bag、temporal）")
+    parser.add_argument("--tianmou-dir", help="天眸数据目录")
     parser.add_argument("--bag", help="RealSense bag文件")
     parser.add_argument("--temporal", help="物理基准时间戳文件")
     parser.add_argument("--auto", action="store_true", help="自动匹配文件")
-    parser.add_argument("--data-dir", default=DEFAULT_CXR_DATA_DIR, help="数据根目录")
+    parser.add_argument("--data-dir", default=DEFAULT_CXR_DATA_DIR, help="数据根目录（auto模式用）")
     parser.add_argument("--output", "-o", help="输出JSON文件路径")
 
     args = parser.parse_args()
 
-    if args.auto:
+    # 模式1: --root 模式，自动探测
+    if args.root:
+        tianmou_dir, bag_path, temporal_file = find_data_in_root(args.root)
+        if not all([tianmou_dir, bag_path, temporal_file]):
+            print("Error: --root 模式无法找到全部三路数据，请检查目录结构")
+            return
+    # 模式2: --auto 模式，根据 temporal 文件名推算路径
+    elif args.auto:
         if not args.temporal:
             temporal_files = sorted(glob.glob(f"{DEFAULT_TEMPORAL_DIR}/tianmou_timestamp_*.csv"))
             if not temporal_files:
@@ -713,14 +760,17 @@ def main():
             return
         if not bag_path:
             print("Warning: 未找到对应的bag文件")
+        temporal_file = args.temporal
+    # 模式3: 三件套手动指定
     else:
         if not all([args.tianmou_dir, args.bag, args.temporal]):
-            parser.error("需要提供 --tianmou-dir, --bag, --temporal 或使用 --auto")
+            parser.error("需要提供 --root, 或 --tianmou-dir + --bag + --temporal, 或使用 --auto")
             return
         tianmou_dir = args.tianmou_dir
         bag_path = args.bag
+        temporal_file = args.temporal
 
-    result = process_session(tianmou_dir, bag_path, args.temporal, args.output)
+    result = process_session(tianmou_dir, bag_path, temporal_file, args.output)
 
     if result:
         print("\n处理完成!")

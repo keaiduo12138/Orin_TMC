@@ -706,9 +706,10 @@ def export_triple_aligned_frames(
 
 def main():
     parser = argparse.ArgumentParser(description="天眸、Depth、Color 三路对齐帧导出")
-    parser.add_argument("--index", "-i", required=True, help="索引文件 (JSON)")
-    parser.add_argument("--tianmou-dir", "-t", required=True, help="天眸数据目录")
-    parser.add_argument("--bag", "-b", required=True, help="RealSense bag文件")
+    parser.add_argument("--root", help="数据根目录（从 --index 的 JSON 中自动获取 tianmou_dir 和 bag_path）")
+    parser.add_argument("--index", "-i", help="索引文件 (JSON)")
+    parser.add_argument("--tianmou-dir", "-t", help="天眸数据目录")
+    parser.add_argument("--bag", "-b", help="RealSense bag文件")
     parser.add_argument("--output", "-o", required=True, help="输出目录")
     parser.add_argument("--max-frames", "-m", type=int, default=-1, help="最大导出帧数 (-1表示全部)")
     parser.add_argument("--use-raw-depth", "-r", action="store_true",
@@ -716,10 +717,49 @@ def main():
 
     args = parser.parse_args()
 
+    # --root 模式：从 JSON 的 input 字段提取 tianmou_dir 和 bag_path
+    if args.root:
+        if not args.index:
+            parser.error("--root 模式需要提供 --index")
+            return 1
+        with open(args.index, 'r') as f:
+            index_data = json.load(f)
+        input_info = index_data.get("input", {})
+        tianmou_dir = input_info.get("tianmou_dir", "")
+        bag_path = input_info.get("bag_path", "")
+        if not tianmou_dir or not bag_path:
+            print(f"Error: JSON 文件中未找到 tianmou_dir 或 bag_path")
+            return 1
+        # JSON 中的路径是绝对路径（如 /projects/market_fast_new/tianmou）
+        # 提取相对于 --root 的部分再拼接回来
+        root_abs = os.path.abspath(args.root)
+        def resolve_path(path):
+            if os.path.exists(path):
+                return path
+            # 尝试相对路径
+            rel = os.path.relpath(path, root_abs)
+            candidate = os.path.join(args.root, rel)
+            if os.path.exists(candidate):
+                return candidate
+            return path
+        tianmou_dir = resolve_path(tianmou_dir)
+        bag_path = resolve_path(bag_path)
+        print(f"--root 模式：从 JSON 提取路径")
+        print(f"  天眸目录: {tianmou_dir}")
+        print(f"  Bag文件:  {bag_path}")
+        index_file = args.index
+    else:
+        if not args.index or not args.tianmou_dir or not args.bag:
+            parser.error("需要提供 --root (自动从 JSON 获取路径)，或 --index + --tianmou-dir + --bag")
+            return 1
+        tianmou_dir = args.tianmou_dir
+        bag_path = args.bag
+        index_file = args.index
+
     success = export_triple_aligned_frames(
-        args.index,
-        args.tianmou_dir,
-        args.bag,
+        index_file,
+        tianmou_dir,
+        bag_path,
         args.output,
         max_frames=args.max_frames,
         use_raw_depth=args.use_raw_depth
