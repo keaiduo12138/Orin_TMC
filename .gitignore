@@ -3,7 +3,6 @@ build
 .clangd
 .cache
 resource
-cxr_files
 python_utils
 
 # Output and temporary files
