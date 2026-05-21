@@ -429,6 +429,7 @@ python calib/depth_0408.py \
 
 
 
-      python3 check_bag_metadata.py /projects/market_fast_1/realsense2026-5-13/18-48-29.bag
+      python3 check_bag_metadata.py /data/hdd8t/0521/bbb_fast_1/realsense2026-5-21/18-32-57.bag
+       python3 check_bag_metadata.py /data/hdd8t/0522/park_fast_1/realsense2026-5-21/17-48-56.bag
 
 python3 post_process.py --root /projects/market_fast_new -o output_market_fast_new.json

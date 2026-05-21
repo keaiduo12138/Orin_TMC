@@ -2,8 +2,8 @@ enable_davis: 0
 enable_power_1v8: 0
 enable_prophesee: 0
 enable_realsense: 1
-file_dir: /projects/CBICR_test8/realsense
+file_dir: /projects/bbb_fast_1/realsense
 file_without_suffix: /projects/cxr_data/2026-1-29/15-55-25
-last_save_dir: /projects/CBICR_test8
+last_save_dir: /projects/bbb_fast_1
 power_1v8_gpio: 433
 run_mode: 1

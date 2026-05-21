@@ -1,0 +1,14 @@
+[Unit]
+Description=Export GPIO 433 for 1.8V LDO EN control
+After=systemd-user-sessions.service
+RemainAfterExit=yes
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c 'echo 433 > /sys/class/gpio/export'
+ExecStart=/bin/bash -c 'echo out > /sys/class/gpio/gpio433/direction'
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
