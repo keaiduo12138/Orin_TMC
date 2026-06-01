@@ -1,0 +1,295 @@
+[2026-05-30T18:59:48.188164] Starting: /projects/miniconda3/envs/tianmoucv/bin/python /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/batch_process.py 0530_extreme6 --workdir /home/nvidia/Desktop/cxr_multi_sensor/yyf_new --calib-script calib/depth_0408.py --calib-output-root /projects/calib_data
+[2026-05-30T18:59:48.188249] Log: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/logs/0530_extreme6.log
+============================================================
+自动探测结果:
+  根目录: /projects/0530_extreme6
+  天眸:   /projects/0530_extreme6/tianmou
+  Bag:    /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag
+  Temporal: /projects/0530_extreme6/temporal_files/tianmou_timestamp_19700101_090055.csv
+
+============================================================
+天眸与RealSense后处理对齐 (三路对齐版)
+============================================================
+输入参数:
+  天眸目录: /projects/0530_extreme6/tianmou
+  Bag文件: /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag
+  时间戳文件: /projects/0530_extreme6/temporal_files/tianmou_timestamp_19700101_090055.csv
+  输出文件: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json
+============================================================
+
+[0.0s] ==================================================
+[0.0s] 阶段 1: 读取物理基准时间戳
+[0.0s] 从temporal文件读取外部电路触发时间
+[0.0s] ==================================================
+  物理基准时间戳: 3638520110 us
+
+[0.0s] ✓ 读取物理基准时间戳 完成 (耗时: 0.0s)
+
+[0.0s] ✓ 读取物理基准时间戳 完成 (耗时: 0.0s)
+
+[0.0s] ==================================================
+[0.0s] 阶段 2: 读取天眸帧时间戳
+[0.0s] 使用TianmoucDataReader读取C_timestamp
+[0.0s] ==================================================
+  天眸目录: /projects/0530_extreme6/tianmou
+TianMouCV™ 0.3.8.9, via Y. Lin  update covert tool and bandwith calculator
+初始化 TianmoucDataReader...
+总帧数: 503
+  天眸帧读取: 50/503 (9.9%) | 耗时: 215.3s | ETA: 1951.1s
+  天眸帧读取: 100/503 (19.9%) | 耗时: 436.8s | ETA: 1760.4s
+  天眸帧读取: 150/503 (29.8%) | 耗时: 653.1s | ETA: 1536.9s
+  天眸帧读取: 200/503 (39.8%) | 耗时: 873.4s | ETA: 1323.2s
+  天眸帧读取: 250/503 (49.7%) | 耗时: 1092.3s | ETA: 1105.4s
+  天眸帧读取: 300/503 (59.6%) | 耗时: 1307.9s | ETA: 885.0s
+  天眸帧读取: 350/503 (69.6%) | 耗时: 1527.8s | ETA: 667.9s
+  天眸帧读取: 400/503 (79.5%) | 耗时: 1747.4s | ETA: 450.0s
+  天眸帧读取: 450/503 (89.5%) | 耗时: 1970.0s | ETA: 232.0s
+  天眸帧读取: 500/503 (99.4%) | 耗时: 2192.6s | ETA: 13.2s
+  天眸帧读取: 503/503 (100.0%) | 耗时: 2206.3s | ETA: 0.0s
+✓ 天眸帧读取完成, 共 503 帧
+  天眸总帧数: 503
+  天眸首帧时间戳: 3636690420 us
+  天眸末帧时间戳: 3653092270 us
+
+[2214.5s] ✓ 读取天眸帧时间戳 完成 (耗时: 2214.5s)
+
+[2214.5s] ✓ 读取天眸帧时间戳 完成 (耗时: 2214.5s)
+
+[2214.5s] ==================================================
+[2214.5s] 阶段 3: 提取RealSense Metadata
+[2214.5s] 使用rs-convert从bag文件提取Color和Depth metadata
+[2214.5s] ==================================================
+  Bag文件: /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag
+已清空临时目录: /projects/cxr_data/metadata_temp
+正在提取RealSense metadata...
+  Bag文件: /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag
+  Bag大小: 214.5 MB
+  执行命令: rs-convert -i /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag -c -p /projects/cxr_data/metadata_temp/color/frame_
+  执行命令: rs-convert -i /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag -d -p /projects/cxr_data/metadata_temp/depth/frame_
+✓ RealSense metadata提取完成
+  Color metadata: 183 个文件
+  Depth metadata: 156 个文件
+  耗时: 47.0s
+
+[2261.7s] ✓ 提取RealSense Metadata 完成 (耗时: 47.2s)
+
+[2261.7s] ✓ 提取RealSense Metadata 完成 (耗时: 47.2s)
+
+[2261.7s] ==================================================
+[2261.7s] 阶段 4: 读取RealSense帧数据
+[2261.7s] 解析Frame Counter和Frame Timestamp
+[2261.7s] ==================================================
+  Color帧数据: 107 帧 (去重后)
+  Depth帧数据: 156 帧 (去重后)
+  Color Frame Counter 范围: 0 - 109
+  Depth Frame Counter 范围: 172 - 331
+
+[2261.7s] ✓ 读取RealSense帧数据 完成 (耗时: 0.0s)
+
+[2261.7s] ✓ 读取RealSense帧数据 完成 (耗时: 0.0s)
+
+[2261.7s] ==================================================
+[2261.7s] 阶段 5: 锚定点匹配
+[2261.7s] 寻找天眸帧与RealSense帧的起始对齐点
+[2261.7s] ==================================================
+找到锚定点: 天眸第56帧 ≈ 物理时间戳
+  天眸帧时间戳: 3638520110 us
+  物理时间戳: 3638520110 us
+  差值: 0 us (0.000 ms)
+  锚定点: 天眸第56帧 <-> Depth第0帧
+
+[2261.7s] ✓ 锚定点匹配 完成 (耗时: 0.0s)
+
+[2261.7s] ✓ 锚定点匹配 完成 (耗时: 0.0s)
+
+[2261.7s] ==================================================
+[2261.7s] 阶段 6: Depth与天眸对齐
+[2261.7s] 以Depth为基准，所有帧统一检测跳帧
+[2261.7s] ==================================================
+  Depth帧数: 156
+  平均帧间隔: 33.00 ms
+  ✓ Depth-天眸对齐完成，共 156 个映射
+
+[2261.7s] ✓ Depth与天眸对齐 完成 (耗时: 0.0s)
+
+[2261.7s] ✓ Depth与天眸对齐 完成 (耗时: 0.0s)
+
+[2261.7s] ==================================================
+[2261.7s] 阶段 7: Color与Depth对齐
+[2261.7s] 基于Frame Counter和相位偏移
+[2261.7s] ==================================================
+  共有 Frame Counter 数量: 0
+  Warning: 没有共有的 Frame Counter！
+
+  Color 对齐结果:
+    有效帧（含 Color）: 0
+    无效帧（无 Color）: 156
+
+[2261.7s] ✓ Color与Depth对齐 完成 (耗时: 0.0s)
+
+[2261.7s] ✓ Color与Depth对齐 完成 (耗时: 0.0s)
+
+[2261.7s] ==================================================
+[2261.7s] 阶段 8: 生成最终结果
+[2261.7s] 只保留三路都有的帧
+[2261.7s] ==================================================
+  结果已保存到: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json
+
+[2261.7s] ✓ 生成最终结果 完成 (耗时: 0.0s)
+
+[2261.7s] ✓ 生成最终结果 完成 (耗时: 0.0s)
+
+==================================================
+总耗时: 2261.7s
+==================================================
+
+各阶段用时:
+  1. 读取物理基准时间戳: 0.0s
+  2. 读取天眸帧时间戳: 2214.5s
+  3. 提取RealSense Metadata: 47.2s
+  4. 读取RealSense帧数据: 0.0s
+  5. 锚定点匹配: 0.0s
+  6. Depth与天眸对齐: 0.0s
+  7. Color与Depth对齐: 0.0s
+  8. 生成最终结果: 0.0s
+
+============================================================
+处理完成!
+  天眸帧: 503
+  Depth帧: 156
+  Color帧: 107
+  锚定点: 天眸第56帧
+  有效三路对齐帧: 0
+  无效（无Color）: 156
+============================================================
+
+处理完成!
+Construct begin /projects/0530_extreme6/tianmou/rod/tianmouc_raw_data_363666951.tmdat, file size 1739729932
+Construct begin /projects/0530_extreme6/tianmou/cone/tianmouc_raw_data_363662508.tmdat, file size 103661184
+TianMouCV™ 0.3.8.9, via Y. Lin  update covert tool and bandwith calculator
+--root 模式：从 JSON 提取路径
+  天眸目录: /projects/0530_extreme6/tianmou
+  Bag文件:  /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag
+
+============================================================
+三路对齐帧导出
+============================================================
+输入:
+  索引文件: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json
+  天眸目录: /projects/0530_extreme6/tianmou
+  Bag文件: /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag
+  输出目录: /projects/calib_data/output_0530_extreme6
+  原始深度模式: 是 (16位Z16)
+============================================================
+
+读取索引文件...
+  总帧数: 0
+  锚定点: 天眸第56帧
+  统计信息:
+    - 天眸总帧: 503
+    - Depth总帧: 156
+    - Color总帧: 107
+    - 有效三路对齐帧: 0
+
+  有效帧（含 Color）: 0
+  实际导出帧数: 0
+
+初始化天眸读取器...
+  天眸总帧数: 503
+
+提取RealSense Color和Depth图像...
+正在提取RealSense图像...
+  执行: rs-convert -i /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag -c -p /projects/calib_data/output_0530_extreme6/realsense_raw/color/frame_
+  使用 rs-convert -d -r 提取原始深度到临时目录...
+    执行: rs-convert -i /projects/0530_extreme6/realsense1970-1-1/9-0-32.bag -d -r /tmp/rs_depth_rirzyl4q/
+    找到 325 个 .raw 文件, 325 个 metadata
+    建立了 325 个 Counter 映射
+    转换 .raw 为 16 位 PNG...
+      [1] counter=0: 1019-65535mm
+      [2] counter=1: 1246-65535mm
+      [3] counter=2: 1057-65535mm
+      [100] counter=100: 1318-65535mm
+      [200] counter=202: 1108-65474mm
+      [300] counter=305: 410-24553mm
+    原始深度: 325 帧 -> 有效 PNG: 325 帧
+  索引文件中 Color Counter 范围: N/A - N/A (共0个)
+  索引文件中 Depth Counter 范围: N/A - N/A (共0个)
+  找到 17 张 Color 图像
+  找到 17 个 metadata 文件
+  调试: 前3个metadata文件: ['frame__Color_metadata_3638659.03845899971202.txt', 'frame__Color_metadata_3638692.02938799979165.txt', 'frame__Color_metadata_3638725.02031700033695.txt']
+    metadata=frame__Color_metadata_3638659.03845899971202.txt, Frame Counter=0
+    metadata=frame__Color_metadata_3638692.02938799979165.txt, Frame Counter=1
+    metadata=frame__Color_metadata_3638725.02031700033695.txt, Frame Counter=2
+  调试: 前3个图像文件: ['frame__Color_3638659.03845899971202.png', 'frame__Color_3638692.02938799979165.png', 'frame__Color_3638725.02031700033695.png']
+  建立了 17 个映射
+  示例: Counter [0, 1, 2, 3, 4] -> frame__Color_3638659.03845899971202.png
+  找到 325 张 Depth 图像
+  使用 Raw Depth 模式解析文件名...
+    建立了 325 个映射
+    示例: Counter [0, 1, 2, 3, 4] -> depth_000000.png
+
+开始导出帧...
+
+============================================================
+导出完成!
+  成功导出: 0 帧
+  错误: 0 帧
+  输出目录: /projects/calib_data/output_0530_extreme6
+    - 天眸图像: /projects/calib_data/output_0530_extreme6/tianmou
+    - Color图像: /projects/calib_data/output_0530_extreme6/color
+    - Depth图像: /projects/calib_data/output_0530_extreme6/depth
+    - 对比图像: /projects/calib_data/output_0530_extreme6/comparison
+============================================================
+Construct begin /projects/0530_extreme6/tianmou/rod/tianmouc_raw_data_363666951.tmdat, file size 1739729932
+Construct begin /projects/0530_extreme6/tianmou/cone/tianmouc_raw_data_363662508.tmdat, file size 103661184
+外参（RS→TM）:
+  R_inv:
+[[ 0.99992037 -0.00441774  0.01182087]
+ [ 0.004458    0.99998435 -0.00338126]
+ [-0.01180575  0.00343369  0.99992441]]
+  T_inv: [  9.01713807 -77.26503834 -29.40806822]
+  |T_inv|: 83.16 mm
+加载索引文件: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json
+  原始帧数: 0, 有效帧(含Color): 0
+数据目录: /projects/calib_data/output_0530_extreme6
+输出目录: /projects/calib_data/output_0530_extreme6/compare_0408/
+对齐深度目录: /projects/calib_data/output_0530_extreme6/depth_tm_0408/
+天眸分辨率: 640×320, RealSense深度分辨率: 640×480
+飞点过滤: 7×7 窗口, 有效点≥5 且 d-median>350.0mm → 剔除
+找到 0 个深度文件
+
+对齐中: 0it [00:00, ?it/s]
+对齐中: 0it [00:00, ?it/s]
+完成！可视化 → /projects/calib_data/output_0530_extreme6/compare_0408/，对齐深度 → /projects/calib_data/output_0530_extreme6/depth_tm_0408/
+
+############################################################
+# Processing dataset: 0530_extreme6
+#   Source root : /projects/0530_extreme6
+#   JSON file   : /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json
+#   Output dir  : /projects/calib_data/output_0530_extreme6
+############################################################
+[OK] Output directory ready: /projects/calib_data/output_0530_extreme6
+
+============================================================
+STEP: Generate aligned index (post_process.py)
+CMD : python3 post_process.py --root /projects/0530_extreme6 -o /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json
+============================================================
+[OK] Step 'Generate aligned index (post_process.py)' completed.
+
+============================================================
+STEP: Export time-aligned frames (export_aligned_frames.py)
+CMD : python3 export_aligned_frames.py --root /projects/0530_extreme6 --index /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json --output /projects/calib_data/output_0530_extreme6 --use-raw-depth
+============================================================
+[OK] Step 'Export time-aligned frames (export_aligned_frames.py)' completed.
+
+============================================================
+STEP: Export calibrated frames (depth_0408.py)
+CMD : python3 calib/depth_0408.py --base /projects/calib_data/output_0530_extreme6 --index /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme6.json
+============================================================
+[OK] Step 'Export calibrated frames (depth_0408.py)' completed.
+
+============================================================
+[DONE] Dataset '0530_extreme6' fully processed.
+       Output saved to: /projects/calib_data/output_0530_extreme6
+============================================================
+[EXIT] code=0

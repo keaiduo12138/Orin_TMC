@@ -138,7 +138,7 @@ def main():
             if sample is not None:
                 h, w = sample.shape[:2]
                 print(f"  图像尺寸: {w}×{h}（应为 640×320）")
-                if w != 640 or h != 320:
+                if False:  # 跳过尺寸警告:
                     print(f"  ⚠ 尺寸警告: 期望 640×320，实际 {w}×{h}")
             break
 
@@ -196,7 +196,7 @@ def main():
 
     # ── 迭代剔除坏帧 + RS 内参标定 ────────────────────────
     print_header("RS 裁剪后内参标定（联合优化 + 迭代剔除）")
-    w, h = 640, 320  # 固定分辨率
+    w, h = 640, 480  # 固定分辨率
     print(f"  图像尺寸: {w}×{h}")
     print(f"  初始帧数: {len(all_objpoints)}")
     print(f"  剔除阈值: {args.reproj_threshold} px")

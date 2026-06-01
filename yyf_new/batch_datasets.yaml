@@ -1,0 +1,23 @@
+# Batch processing configuration
+# List all datasets to process. Each entry corresponds to one "shooting session".
+# The script will automatically derive JSON and output directory names from the folder name.
+
+base_workdir: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new
+
+# Calibration sub-script path (relative to base_workdir)
+calib_script: calib/depth_0408.py
+
+# Output root for calibrated data
+calib_output_root: /projects/calib_data
+
+datasets:
+  # - 0530_extreme1
+  # - 0530_extreme2
+  # - 0530_extreme3
+  - 0530_extreme4
+  - 0530_extreme5
+  - 0530_extreme6
+  - 0530_extreme7
+  # - 0530_extreme8
+  - 0530_extreme9
+  - 0530_extreme10

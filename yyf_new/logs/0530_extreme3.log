@@ -1,0 +1,102 @@
+[2026-05-30T18:59:22.634615] Starting: /projects/miniconda3/envs/tianmoucv/bin/python /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/batch_process.py 0530_extreme3 --workdir /home/nvidia/Desktop/cxr_multi_sensor/yyf_new --calib-script calib/depth_0408.py --calib-output-root /projects/calib_data
+[2026-05-30T18:59:22.634683] Log: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/logs/0530_extreme3.log
+============================================================
+自动探测结果:
+  根目录: /projects/0530_extreme3
+  天眸:   /projects/0530_extreme3/tianmou
+  Bag:    /projects/0530_extreme3/realsense1970-1-1/8-46-35.bag
+  Temporal: /projects/0530_extreme3/temporal_files/tianmou_timestamp_19700101_084659.csv
+
+============================================================
+天眸与RealSense后处理对齐 (三路对齐版)
+============================================================
+输入参数:
+  天眸目录: /projects/0530_extreme3/tianmou
+  Bag文件: /projects/0530_extreme3/realsense1970-1-1/8-46-35.bag
+  时间戳文件: /projects/0530_extreme3/temporal_files/tianmou_timestamp_19700101_084659.csv
+  输出文件: /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme3.json
+============================================================
+
+[0.0s] ==================================================
+[0.0s] 阶段 1: 读取物理基准时间戳
+[0.0s] 从temporal文件读取外部电路触发时间
+[0.0s] ==================================================
+  物理基准时间戳: 2800491090 us
+
+[0.0s] ✓ 读取物理基准时间戳 完成 (耗时: 0.0s)
+
+[0.0s] ✓ 读取物理基准时间戳 完成 (耗时: 0.0s)
+
+[0.0s] ==================================================
+[0.0s] 阶段 2: 读取天眸帧时间戳
+[0.0s] 使用TianmoucDataReader读取C_timestamp
+[0.0s] ==================================================
+  天眸目录: /projects/0530_extreme3/tianmou
+TianMouCV™ 0.3.8.9, via Y. Lin  update covert tool and bandwith calculator
+Traceback (most recent call last):
+  File "/home/nvidia/Desktop/cxr_multi_sensor/yyf_new/post_process.py", line 782, in <module>
+    main()
+  File "/home/nvidia/Desktop/cxr_multi_sensor/yyf_new/post_process.py", line 773, in main
+    result = process_session(tianmou_dir, bag_path, temporal_file, args.output)
+  File "/home/nvidia/Desktop/cxr_multi_sensor/yyf_new/post_process.py", line 522, in process_session
+    tianmou_timestamps = read_tianmou_timestamps_from_reader(tianmou_dir, camera_idx=0)
+  File "/home/nvidia/Desktop/cxr_multi_sensor/yyf_new/post_process.py", line 146, in read_tianmou_timestamps_from_reader
+    from tianmoucv.data import TianmoucDataReader
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/tianmoucv/data/__init__.py", line 1, in <module>
+    from .tianmoucData_pcie import TianmoucDataReader_pcie
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/tianmoucv/data/tianmoucData_pcie.py", line 5, in <module>
+    import matplotlib.pyplot as plt
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/pyplot.py", line 70, in <module>
+    from matplotlib.figure import Figure, FigureBase, figaspect
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/figure.py", line 40, in <module>
+    from matplotlib import _blocking_input, backend_bases, _docstring, projections
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/projections/__init__.py", line 60, in <module>
+    from mpl_toolkits.mplot3d import Axes3D
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/mpl_toolkits/mplot3d/__init__.py", line 1, in <module>
+    from .axes3d import Axes3D
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/mpl_toolkits/mplot3d/axes3d.py", line 36, in <module>
+    from . import art3d
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/mpl_toolkits/mplot3d/art3d.py", line 625, in <module>
+    class Patch3DCollection(PatchCollection):
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/artist.py", line 149, in __init_subclass__
+    cls._update_set_signature_and_docstring()
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/artist.py", line 177, in _update_set_signature_and_docstring
+    + kwdoc(cls))
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/artist.py", line 1851, in kwdoc
+    'Properties:\n' + '\n'.join(ai.pprint_setters(leadingspace=4)))
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/artist.py", line 1612, in pprint_setters
+    accepts = self.get_valid_values(prop)
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/site-packages/matplotlib/artist.py", line 1485, in get_valid_values
+    match = self._get_valid_values_regex.search(docstring)
+KeyboardInterrupt
+
+############################################################
+# Processing dataset: 0530_extreme3
+#   Source root : /projects/0530_extreme3
+#   JSON file   : /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme3.json
+#   Output dir  : /projects/calib_data/output_0530_extreme3
+############################################################
+[OK] Output directory ready: /projects/calib_data/output_0530_extreme3
+
+============================================================
+STEP: Generate aligned index (post_process.py)
+CMD : python3 post_process.py --root /projects/0530_extreme3 -o /home/nvidia/Desktop/cxr_multi_sensor/yyf_new/output_0530_extreme3.json
+============================================================
+Traceback (most recent call last):
+  File "/home/nvidia/Desktop/cxr_multi_sensor/yyf_new/batch_process.py", line 105, in <module>
+    main()
+  File "/home/nvidia/Desktop/cxr_multi_sensor/yyf_new/batch_process.py", line 72, in main
+    run_step([
+  File "/home/nvidia/Desktop/cxr_multi_sensor/yyf_new/batch_process.py", line 29, in run_step
+    result = subprocess.run(cmd, cwd=cwd)
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/subprocess.py", line 1146, in communicate
+    self.wait()
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/subprocess.py", line 1959, in _wait
+    (pid, sts) = self._try_wait(0)
+  File "/projects/miniconda3/envs/tianmoucv/lib/python3.10/subprocess.py", line 1917, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+KeyboardInterrupt

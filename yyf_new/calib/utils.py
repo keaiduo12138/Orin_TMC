@@ -17,9 +17,9 @@ from typing import Tuple, List, Dict, Any, Optional
 # ============================================================
 # 棋盘格参数
 # ============================================================
-BOARD_COLS = 11
-BOARD_ROWS = 8
-SQUARE_SIZE = 29.66          # mm（须与采集时一致）
+BOARD_COLS = 9
+BOARD_ROWS = 6
+SQUARE_SIZE = 43.46          # mm（须与采集时一致）
 FACTOR_RESIZE = 2.0         # 角点检测放大倍率
 
 # 天眸参考内参（640×320, v2镜头 2026-03）
